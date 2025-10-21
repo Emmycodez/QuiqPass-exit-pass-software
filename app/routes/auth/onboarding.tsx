@@ -37,7 +37,7 @@ const OnboardingPage = ({ loaderData }: Route.ComponentProps) => {
   };
 
   if (loaderData.status === 302) {
-    redirect("/login");
+   return redirect("/login");
   }
 
   return (

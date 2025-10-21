@@ -1,168 +1,179 @@
-import * as React from "react";
+import * as React from "react"
+import {
+  IconCamera,
+  IconChartBar,
+  IconDashboard,
+  IconDatabase,
+  IconFileAi,
+  IconFileDescription,
+  IconFileWord,
+  IconFolder,
+  IconHelp,
+  IconInnerShadowTop,
+  IconListDetails,
+  IconReport,
+  IconSearch,
+  IconSettings,
+  IconUsers,
+} from  '@tabler/icons-react'
 
-import { SearchForm } from "~/components/search-form";
-import { TeamSwitcher } from "~/components/team-switcher";
+import { NavDocuments } from "~/components/nav-documents"
+import { NavMain } from "~/components/nav-main"
+import { NavSecondary } from "~/components/nav-secondary"
+import { NavUser } from "~/components/nav-user"
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail,
-} from "~/components/ui/sidebar";
-import {
-  RiScanLine,
-  RiBardLine,
-  RiUserFollowLine,
-  RiCodeSSlashLine,
-  RiLoginCircleLine,
-  RiLayoutLeftLine,
-  RiSettings3Line,
-  RiLeafLine,
-  RiLogoutBoxLine,
-} from "@remixicon/react";
+} from "~/components/ui/sidebar"
 
-// This is sample data.
 const data = {
-  teams: [
-    {
-      name: "InnovaCraft",
-      logo: "https://raw.githubusercontent.com/origin-space/origin-images/refs/heads/main/exp1/logo-01_kp2j8x.png",
-    },
-    {
-      name: "Acme Corp.",
-      logo: "https://raw.githubusercontent.com/origin-space/origin-images/refs/heads/main/exp1/logo-01_kp2j8x.png",
-    },
-    {
-      name: "Evil Corp.",
-      logo: "https://raw.githubusercontent.com/origin-space/origin-images/refs/heads/main/exp1/logo-01_kp2j8x.png",
-    },
-  ],
+  user: {
+    name: "shadcn",
+    email: "m~example.com",
+    avatar: "/avatars/shadcn.jpg",
+  },
   navMain: [
     {
-      title: "Sections",
+      title: "Dashboard",
+      url: "#",
+      icon: IconDashboard,
+    },
+    {
+      title: "Lifecycle",
+      url: "#",
+      icon: IconListDetails,
+    },
+    {
+      title: "Analytics",
+      url: "#",
+      icon: IconChartBar,
+    },
+    {
+      title: "Projects",
+      url: "#",
+      icon: IconFolder,
+    },
+    {
+      title: "Team",
+      url: "#",
+      icon: IconUsers,
+    },
+  ],
+  navClouds: [
+    {
+      title: "Capture",
+      icon: IconCamera,
+      isActive: true,
       url: "#",
       items: [
         {
-          title: "Dashboard",
+          title: "Active Proposals",
           url: "#",
-          icon: RiScanLine,
         },
         {
-          title: "Insights",
+          title: "Archived",
           url: "#",
-          icon: RiBardLine,
-        },
-        {
-          title: "Contacts",
-          url: "#",
-          icon: RiUserFollowLine,
-          isActive: true,
-        },
-        {
-          title: "Tools",
-          url: "#",
-          icon: RiCodeSSlashLine,
-        },
-        {
-          title: "Integration",
-          url: "#",
-          icon: RiLoginCircleLine,
-        },
-        {
-          title: "Layouts",
-          url: "#",
-          icon: RiLayoutLeftLine,
-        },
-        {
-          title: "Reports",
-          url: "#",
-          icon: RiLeafLine,
         },
       ],
     },
     {
-      title: "Other",
+      title: "Proposal",
+      icon: IconFileDescription,
       url: "#",
       items: [
         {
-          title: "Settings",
+          title: "Active Proposals",
           url: "#",
-          icon: RiSettings3Line,
         },
         {
-          title: "Help Center",
+          title: "Archived",
           url: "#",
-          icon: RiLeafLine,
+        },
+      ],
+    },
+    {
+      title: "Prompts",
+      icon: IconFileAi,
+      url: "#",
+      items: [
+        {
+          title: "Active Proposals",
+          url: "#",
+        },
+        {
+          title: "Archived",
+          url: "#",
         },
       ],
     },
   ],
-};
+  navSecondary: [
+    {
+      title: "Settings",
+      url: "#",
+      icon: IconSettings,
+    },
+    {
+      title: "Get Help",
+      url: "#",
+      icon: IconHelp,
+    },
+    {
+      title: "Search",
+      url: "#",
+      icon: IconSearch,
+    },
+  ],
+  documents: [
+    {
+      name: "Data Library",
+      url: "#",
+      icon: IconDatabase,
+    },
+    {
+      name: "Reports",
+      url: "#",
+      icon: IconReport,
+    },
+    {
+      name: "Word Assistant",
+      url: "#",
+      icon: IconFileWord,
+    },
+  ],
+}
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar {...props}>
+    <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
-        <hr className="border-t border-border mx-2 -mt-px" />
-        <SearchForm className="mt-3" />
-      </SidebarHeader>
-      <SidebarContent>
-        {/* We create a SidebarGroup for each parent. */}
-        {data.navMain.map((item) => (
-          <SidebarGroup key={item.title}>
-            <SidebarGroupLabel className="uppercase text-muted-foreground/60">
-              {item.title}
-            </SidebarGroupLabel>
-            <SidebarGroupContent className="px-2">
-              <SidebarMenu>
-                {item.items.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      className="group/menu-button font-medium gap-3 h-9 rounded-md bg-gradient-to-r hover:bg-transparent hover:from-sidebar-accent hover:to-sidebar-accent/40 data-[active=true]:from-primary/20 data-[active=true]:to-primary/5 [&>svg]:size-auto"
-                      isActive={item.isActive}
-                    >
-                      <a href={item.url}>
-                        {item.icon && (
-                          <item.icon
-                            className="text-muted-foreground/60 group-data-[active=true]/menu-button:text-primary"
-                            size={22}
-                            aria-hidden="true"
-                          />
-                        )}
-                        <span>{item.title}</span>
-                      </a>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
-      </SidebarContent>
-      <SidebarFooter>
-        <hr className="border-t border-border mx-2 -mt-px" />
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton className="font-medium gap-3 h-9 rounded-md bg-gradient-to-r hover:bg-transparent hover:from-sidebar-accent hover:to-sidebar-accent/40 data-[active=true]:from-primary/20 data-[active=true]:to-primary/5 [&>svg]:size-auto">
-              <RiLogoutBoxLine
-                className="text-muted-foreground/60 group-data-[active=true]/menu-button:text-primary"
-                size={22}
-                aria-hidden="true"
-              />
-              <span>Sign Out</span>
+            <SidebarMenuButton
+              asChild
+              className="data-[slot=sidebar-menu-button]:!p-1.5"
+            >
+              <a href="#">
+                <IconInnerShadowTop className="!size-5" />
+                <span className="text-base font-semibold">Acme Inc.</span>
+              </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
+      </SidebarHeader>
+      <SidebarContent>
+        <NavMain items={data.navMain} />
+        <NavDocuments items={data.documents} />
+        <NavSecondary items={data.navSecondary} className="mt-auto" />
+      </SidebarContent>
+      <SidebarFooter>
+        <NavUser user={data.user} />
       </SidebarFooter>
-      <SidebarRail />
     </Sidebar>
-  );
+  )
 }

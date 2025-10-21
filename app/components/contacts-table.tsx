@@ -45,12 +45,12 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import {
-  ColumnDef,
-  ColumnFiltersState,
-  FilterFn,
-  PaginationState,
-  SortingState,
-  VisibilityState,
+ type ColumnDef,
+ type ColumnFiltersState,
+ type FilterFn,
+ type PaginationState,
+ type SortingState,
+ type VisibilityState,
   flexRender,
   getCoreRowModel,
   getFacetedUniqueValues,

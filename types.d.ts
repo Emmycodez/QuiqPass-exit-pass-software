@@ -21,3 +21,14 @@ export interface OnboardingFormProps{
   lastName: string;
   email: string
 }
+
+export type SessionData = {
+    user: {
+        name: string | null;
+        image: string | null;
+        // Add other properties you might need from the user object
+    } | null;
+} | null;
+
+
+const roles = ['porter', 'CSO', 'Assistant CSO', 'Security']

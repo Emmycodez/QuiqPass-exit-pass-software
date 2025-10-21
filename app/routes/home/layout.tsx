@@ -5,7 +5,7 @@ const HomePageLayout = () => {
   return (
     <div>
       <Navbar /> 
-      <div className="min-h-screen relative">
+      <div className="min-h-screen relative w-full">
         {/* This div now only contains the gradient background and the main content */}
         <div
           className="fixed inset-0 z-0"

@@ -46,7 +46,7 @@ export async function action({ request }: Route.ActionArgs) {
     }
 
     // Redirect to dashboard if successful
-    return redirect("/student-dashboard");
+    return redirect("/dashboard");
   } catch (error) {
     // Handle registration errors
     return data(

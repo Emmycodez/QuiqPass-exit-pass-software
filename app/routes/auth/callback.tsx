@@ -2,6 +2,8 @@ import React from "react";
 import { supabase } from "supabase/supabase-client";
 import { useNavigate } from "react-router";
 
+// TODO: Work on the ui of the auth callback page
+
 export default function AuthCallback() {
   const navigate = useNavigate();
   React.useEffect(() => {
@@ -69,7 +71,7 @@ export default function AuthCallback() {
 
       // ✅ Redirect based on is_onboarded flag
       if (student.is_onboarded) {
-        navigate("/student_dashboard");
+        navigate("/student-dashboard");
       } else {
         navigate("/onboarding");
       }

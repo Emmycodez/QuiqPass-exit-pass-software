@@ -12,5 +12,7 @@ export default [
   layout("routes/student_dashboard/layout.tsx", [
  route("/student-dashboard", "routes/student_dashboard/student-dashboard.tsx"),
   ]),
+  route("/test", "dashboard/page.tsx"),
+  route("dashboard", "routes/auth/dashboard.tsx")
  
 ] satisfies RouteConfig;

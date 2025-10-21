@@ -5,8 +5,10 @@ import {
   CloudUpload,
   Database,
   Edit3,
+  ExternalLink,
   FileText,
   Layout,
+  Loader2,
   Lock,
   Menu,
   Users,
@@ -29,12 +31,15 @@ import {
   SheetTrigger,
 } from "~/components/ui/sheet";
 import { cn } from "~/lib/utils";
+import { NavLink } from "react-router";
 
 import Logo from "~/components/global/logo";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { getInitials } from "~/lib/generateInitials";
+import { getUserSessionData } from "~/lib/getUserSessionData";
+import type { SessionData } from "types";
 
 const features = [
   {
@@ -102,9 +107,28 @@ const features = [
   },
 ];
 
-export default function Navbar({ session }: { session?: Session | null }) {
+export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const [session, setSession] = useState<SessionData>(null);
   const [showFeatures, setShowFeatures] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    async function fetchSession() {
+      setLoading(true);
+      try {
+        const data: SessionData = await getUserSessionData();
+        setSession(data);
+      } catch (error) {
+        console.error("Error fetching session:", error);
+        setSession(null); // Ensure session is null on error
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchSession();
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-2 px-6">
@@ -172,11 +196,7 @@ export default function Navbar({ session }: { session?: Session | null }) {
                           </p>
                         </div>
                         <Button asChild variant="secondary">
-                          <Link
-                            to="/register"
-                          >
-                            Get started
-                          </Link>
+                          <Link to="/register">Get started</Link>
                         </Button>
                       </div>
                     </div>
@@ -196,20 +216,27 @@ export default function Navbar({ session }: { session?: Session | null }) {
           </NavigationMenu>
         </div>
         {session ? (
-          <Button asChild variant={"ghost"}>
-            <Link to="/dashboard">
-              <Avatar>
-                <AvatarImage
-                  src={session?.user?.image ?? ""}
-                  alt={session?.user?.name ?? ""}
-                />
-                <AvatarFallback>
-                  {getInitials(session?.user?.name)}
-                </AvatarFallback>
-              </Avatar>
-              <span className="ml-3">Dashboard</span>
-            </Link>
-          </Button>
+          <div className="flex gap-2 justify-center items-center">
+            <Avatar>
+              <AvatarImage
+                src={session?.user?.image ?? ""}
+                alt={session?.user?.name ?? ""}
+              />
+              <AvatarFallback>
+                {getInitials(session?.user?.name)}
+              </AvatarFallback>
+            </Avatar>
+            <Button asChild variant={"ghost"} onClick={() => setLoading(true)}>
+              {loading ? (
+                <Loader2 className="animate-spin text-black bg-purple-500" />
+              ) : (
+                <NavLink to="/dashboard">
+                  <span className="ml-3 font-semibold text-md">Dashboard</span>
+                  <ExternalLink className="inline-block ml-1 h-4 w-4" />
+                </NavLink>
+              )}
+            </Button>
+          </div>
         ) : (
           <div className="hidden md:flex items-center space-x-4">
             <Button asChild variant="ghost">
@@ -286,15 +313,11 @@ export default function Navbar({ session }: { session?: Session | null }) {
             </div>
             <div className="absolute bottom-0 left-0 right-0 p-4 border-t bg-background">
               <div className="grid gap-2">
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => setOpen(false)}
-                >
-                  Log in
+                <Button asChild variant="ghost">
+                  <Link to={"/login"}>Log in</Link>
                 </Button>
-                <Button className="w-full" onClick={() => setOpen(false)}>
-                  Sign up
+                <Button>
+                  <Link to="/register">Signup</Link>
                 </Button>
               </div>
             </div>
