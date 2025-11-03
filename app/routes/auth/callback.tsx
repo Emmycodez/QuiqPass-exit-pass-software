@@ -17,7 +17,7 @@ export default function AuthCallback() {
       const refresh_token = params.get("refresh_token");
 
       if (!access_token || !refresh_token) {
-        navigate("/login"); // or your auth page
+       window.location.replace("/login");// or your auth page
         return;
       }
       // Save Supabase session

@@ -9,7 +9,7 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "rounded-xl border bg-white/90 backdrop-blur-md border-white/20 shadow-2xl",
+      "rounded-xl border bg-white/10 backdrop-blur-md border-white/20 shadow-2xl",
       // Optional liquid gradient via inline style or class
       "bg-gradient-to-br from-white/5 to-white/10",
       className
