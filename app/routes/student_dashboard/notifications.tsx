@@ -128,7 +128,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
       toast.success("Notification marked as read");
 
-      return { success: true };
+      return null;
     }
 
     if (intent === "mark-all-read") {
@@ -147,7 +147,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
       toast.success("All notifications marked as read");
 
-      return { success: true };
+      return null
     }
 
     if (intent === "delete") {
@@ -168,7 +168,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
       toast.success("Notification deleted");
 
-      return { success: true };
+      return null;
     }
 
     return null;
@@ -214,12 +214,9 @@ function formatTimestamp(ts: string) {
 export default function NotificationsPage({
   loaderData,
 }: Route.ComponentProps) {
-  const { notifications: initialNotifications, error } = loaderData;
+  const { notifications, error } = loaderData;
   const [searchQuery, setSearchQuery] = useState("");
-  // keep local for optimistic UI (optional). We'll also rely on loader revalidation.
-  const [notifications, setNotifications] = useState<NotificationRow[]>(
-    initialNotifications || []
-  );
+  
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
