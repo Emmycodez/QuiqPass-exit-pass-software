@@ -122,12 +122,16 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
         .delete()
         .eq("id", passId)
         .eq("student_id", userId);
+
+        if(deleteError) {
+          return deleteError.message;
+        }
     }
 
     toast.promise(deleteRequest(user.id, passId), {
       loading: "Deleting Request....",
       success: "Request Deleted Successfully",
-      error: "Error Deleting Request",
+      error: `Error Deleting Request`
     });
 
     // toast.success("Exit pass has beeen successfully deleted");

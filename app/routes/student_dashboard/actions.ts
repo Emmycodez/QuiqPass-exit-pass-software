@@ -113,7 +113,7 @@ export async function applyForStudentPass(formData: FormData, request: Request) 
       recipient_id: student.id,
       recipient_type: "student",
       pass_id: newPass.id,
-      message: `WellSpring Guardian Notification: Your child ${student.first_name}has requested a ${passType} exit pass.`,
+      message: `WellSpring Guardian Notification: Your child ${student.first_name} has requested a ${passType} exit pass.`,
       type: "system", // or email
       metadata: {
         phone: student.guardian_phone_number,

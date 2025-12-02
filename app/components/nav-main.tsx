@@ -19,6 +19,7 @@ export function NavMain({
     title: string;
     url: string;
     icon?: LucideIcon | Icon;
+    unread?: number | undefined;
   }[];
 }) {
   return (
@@ -55,9 +56,23 @@ export function NavMain({
             const isActive = pathname === item.url;
             return (
               <SidebarMenuItem key={item.title}>
-                <Link to={item.url}>
-                  <SidebarMenuButton tooltip={item.title} isActive={isActive}>
-                    {item.icon && <item.icon />}
+                <Link to={item.url} className="relative">
+                  <SidebarMenuButton
+                    tooltip={item.title}
+                    isActive={isActive}
+                    className="w-full justify-start"
+                  >
+                    {/* Icon Wrapper with Badge */}
+                    <div className="relative mr-2">
+                      {item.icon && <item.icon className="h-4 w-4" />}
+
+                      {item.unread && (
+                        <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-red-600 text-white text-[8px] font-bold">
+                          {item.unread > 99 ? "99+" : item.unread}
+                        </span>
+                      )}
+                    </div>
+
                     <span>{item.title}</span>
                   </SidebarMenuButton>
                 </Link>

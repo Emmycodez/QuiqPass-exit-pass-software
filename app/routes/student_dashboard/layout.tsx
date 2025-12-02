@@ -1,4 +1,5 @@
 import {
+  IconBell,
   IconCamera,
   IconChartBar,
   IconDashboard,
@@ -13,17 +14,68 @@ import {
   IconSettings,
   IconUsers,
 } from "@tabler/icons-react";
-import { Outlet } from "react-router";
+import { Outlet, useLoaderData, redirect } from "react-router";
+import { supabase } from "supabase/supabase-client";
 // import { AppSidebar } from "~/components/app-sidebar"; // REMOVE THIS
 import CustomSidebar from "~/components/global/custom-sidebar";
 import { NavMain } from "~/components/nav-main";
 import { NavUser } from "~/components/nav-user";
 
-const data = {
+export async function clientLoader() {
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
+  if (!user || error) {
+    return redirect("login");
+  }
+
+  const [profileRes, notifRes] = await Promise.all([
+    supabase
+      .from("student")
+      .select("first_name, last_name,email, photo_url")
+      .eq("id", user.id)
+      .single(),
+
+    supabase
+      .from("notification")
+      .select("id", { count: "exact", head: true })
+      .eq("recipient_id", user.id)
+      .eq("recipient_type", "student")
+      .eq("is_read", false),
+  ]);
+
+  if (profileRes.error) {
+    console.error("Failed to load profile: ", profileRes.error);
+    return redirect("/login");
+  }
+
+  return {
+    user,
+    profile: profileRes.data,
+    unreadCount: notifRes.count || 0,
+  }
+}
+
+export type StudentLayoutData = Exclude<
+  Awaited<ReturnType<typeof clientLoader>>,
+  Response
+>;
+
+
+const StudentDashboardLayout = () => {
+  const gradientStyle = {
+    background: "radial-gradient(125% 125% at 50% 10%, #fff 40%, #6366f1 100%)",
+  };
+
+  const { profile, unreadCount} = useLoaderData() as StudentLayoutData;
+
+  const data = {
   user: {
-    name: "shadcn",
-    email: "m~example.com",
-    avatar: "/avatars/shadcn.jpg",
+    name: profile.first_name + " " + profile.last_name,
+    email: profile.email,
+    avatar: profile.photo_url || undefined,
   },
   navMain: [
     {
@@ -45,6 +97,12 @@ const data = {
       title: "Profile",
       url: "/student-dashboard/my-profile",
       icon: IconUsers,
+    },
+    {
+      title: "Notifications",
+      url: "/student-dashboard/notifications",
+      icon: IconBell,
+      unread: unreadCount > 0 ? unreadCount : undefined,
     },
   ],
   navClouds: [
@@ -131,10 +189,6 @@ const data = {
   ],
 };
 
-const StudentDashboardLayout = () => {
-  const gradientStyle = {
-    background: "radial-gradient(125% 125% at 50% 10%, #fff 40%, #6366f1 100%)",
-  };
 
   return (
     <div className="min-h-screen relative" suppressHydrationWarning>
@@ -164,6 +218,5 @@ const StudentDashboardLayout = () => {
     </div>
   );
 };
-
 
 export default StudentDashboardLayout;
