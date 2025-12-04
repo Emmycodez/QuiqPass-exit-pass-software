@@ -2,7 +2,7 @@ import Logo from "~/components/global/logo";
 import type { Route } from "./+types/register";
 import RegisterForm from "./_components/registration-form";
 import { signupSchema } from "zod/signUp";
-import { data, Navigate, redirect } from "react-router";
+import { data } from "react-router";
 import { supabase } from "supabase/supabase-client";
 
 export async function action({ request }: Route.ActionArgs) {
@@ -36,14 +36,19 @@ export async function action({ request }: Route.ActionArgs) {
 
   // If validation passes, proceed with registration logic
   try {
-    // Your registration logic here
+    // Step 1: Create Supabase Auth user
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: result.data.email,
       password: result.data.password,
+      options: {
+        data: {
+          full_name: `${result.data.firstName} ${result.data.lastName}`,
+        },
+      },
     });
 
     if (authError) {
-      console.log("Auth error: ", authError);
+      console.error("Auth error:", authError);
       return data(
         {
           errors: { general: authError.message },
@@ -52,28 +57,86 @@ export async function action({ request }: Route.ActionArgs) {
       );
     }
 
-    const { error: studentError } = await supabase.from("student").insert([
-      {
-        id: authData.user?.id,
-        first_name: result.data.firstName,
-        last_name: result.data.lastName,
-        email: result.data.email,
-      },
-    ]);
-
-    if (studentError) {
-      console.log("Student error: ", studentError);
+    if (!authData.user) {
       return data(
-        { errors: { general: studentError.message } },
+        {
+          errors: { general: "Failed to create user account" },
+        },
         { status: 400 }
       );
     }
 
+    // Step 2: Create entry in unified users table
+    const { error: usersError } = await supabase.from("users").insert({
+      id: authData.user.id,
+      email: result.data.email,
+      user_type: "student",
+    });
+
+    if (usersError) {
+      console.error("Users table error:", usersError);
+      
+      // Cleanup: Delete the auth user if users table insert fails
+      await supabase.auth.admin.deleteUser(authData.user.id);
+      
+      return data(
+        { 
+          errors: { 
+            general: "Failed to create user profile. Please try again." 
+          } 
+        },
+        { status: 400 }
+      );
+    }
+
+    // Step 3: Create entry in student table
+    const { error: studentError } = await supabase.from("student").insert({
+      id: authData.user.id,
+      first_name: result.data.firstName,
+      last_name: result.data.lastName,
+      email: result.data.email,
+      is_onboarded: false,
+    });
+
+    if (studentError) {
+      console.error("Student table error:", studentError);
+      
+      // Cleanup: Delete from users table and auth
+      await supabase.from("users").delete().eq("id", authData.user.id);
+      await supabase.auth.admin.deleteUser(authData.user.id);
+      
+      return data(
+        { 
+          errors: { 
+            general: "Failed to create student profile. Please try again." 
+          } 
+        },
+        { status: 400 }
+      );
+    }
+
+    // Step 4: Log the registration in audit_log
+    await supabase.from("audit_log").insert({
+      user_id: authData.user.id,
+      action: "user_registered",
+      entity_type: "student",
+      entity_id: authData.user.id,
+      metadata: {
+        registration_method: "email_password",
+      },
+    });
+
+    // Success!
     return data(
-      { success: true, message: "Account created! Please confirm your email." },
+      { 
+        success: true, 
+        message: "Account created successfully! Please check your email to confirm your account." 
+      },
       { status: 200 }
-    )
+    );
   } catch (error) {
+    console.error("Unexpected registration error:", error);
+    
     // Handle registration errors
     return data(
       {

@@ -25,6 +25,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     return redirect("/student-dashboard");
   } else {
     toast.error(res.message || "Onboarding Failed. Please try again.");
+    console.log("Onboarding failed: ", res.message);
   }
 
   return res;

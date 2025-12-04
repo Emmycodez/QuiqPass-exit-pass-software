@@ -48,6 +48,7 @@ if (!user) {
       level: Number(onboardingData.level), 
       hostel_id: hostelData?.id,
       is_onboarded: true,
+      bed_number: onboardingData.bedNumber as string
     };
 
     const {error: studentOnboardingError} = await supabase.from('student').upsert([studentData]);

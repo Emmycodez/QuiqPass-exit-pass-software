@@ -47,6 +47,7 @@ type FormData = {
   guardianPhoneNumber: string;
   level: string;
   roomNumber: string;
+  bedNumber: string
 };
 
 export default function OnboardingForm({
@@ -70,6 +71,7 @@ export default function OnboardingForm({
     roomNumber: "",
     guardianPhoneNumber: "",
     level: "",
+    bedNumber: "",
     // photoUrl: '' // Commented out
   });
 
@@ -367,6 +369,18 @@ export default function OnboardingForm({
                   handleInputChange("roomNumber", e.target.value)
                 }
                 placeholder="e.g: 32"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bedNumber">Bed Number</Label>
+              <Input
+                id="bedNumber"
+                name="bedNumber"
+                value={formData.bedNumber}
+                onChange={(e) =>
+                  handleInputChange("bedNumber", e.target.value)
+                }
+                placeholder="e.g: 3"
               />
             </div>
 
