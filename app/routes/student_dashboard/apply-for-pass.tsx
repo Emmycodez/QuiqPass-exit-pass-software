@@ -5,13 +5,14 @@ import {
   Loader2,
   MapPin,
   Phone,
+  AlertTriangle,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { Form, redirect, useNavigate, useNavigation } from "react-router";
 import type { FormData, PassType } from "types";
 import { DashboardHeaders } from "~/components/dashboard";
-import { Alert, AlertDescription } from "~/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
 import {
   Card,
@@ -34,6 +35,7 @@ import {
 import { Textarea } from "~/components/ui/textarea";
 import type { Route } from "./+types/layout";
 import { applyForStudentPass } from "./actions";
+import { supabase } from "supabase/supabase-client";
 
 const reasonOptions = [
   "Medical Appointment",
@@ -46,6 +48,14 @@ const reasonOptions = [
   "Sick Leave",
   "Other",
 ];
+
+// Type for pass limits
+interface PassLimits {
+  shortPassesRemaining: number;
+  longPassesRemaining: number;
+  hasSpecialPrivilege: boolean;
+  loading: boolean;
+}
 
 export async function clientAction({ request }: Route.ClientActionArgs) {
   let res;
@@ -95,6 +105,68 @@ export default function ApplyPage({ actionData }: Route.ComponentProps) {
     parentNotification: true,
   });
 
+  const [passLimits, setPassLimits] = useState<PassLimits>({
+    shortPassesRemaining: 2,
+    longPassesRemaining: 1,
+    hasSpecialPrivilege: false,
+    loading: true,
+  });
+
+  // Fetch pass limits on component mount
+  useEffect(() => {
+    async function fetchPassLimits() {
+      try {
+        // Get current user
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Get current month-year
+        const now = new Date();
+        const monthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+        // Check if student has special privilege
+        const { data: student } = await supabase
+          .from('student')
+          .select('has_special_privilege')
+          .eq('id', user.id)
+          .single();
+
+        if (student?.has_special_privilege) {
+          setPassLimits({
+            shortPassesRemaining: Infinity,
+            longPassesRemaining: Infinity,
+            hasSpecialPrivilege: true,
+            loading: false,
+          });
+          return;
+        }
+
+        // Get pass limit tracking for current month
+        const { data: tracking } = await supabase
+          .from('pass_limit_tracking')
+          .select('short_pass_count, long_pass_count')
+          .eq('student_id', user.id)
+          .eq('month_year', monthYear)
+          .maybeSingle();
+
+        const shortCount = tracking?.short_pass_count || 0;
+        const longCount = tracking?.long_pass_count || 0;
+
+        setPassLimits({
+          shortPassesRemaining: Math.max(0, 2 - shortCount),
+          longPassesRemaining: Math.max(0, 1 - longCount),
+          hasSpecialPrivilege: false,
+          loading: false,
+        });
+      } catch (error) {
+        console.error('Error fetching pass limits:', error);
+        setPassLimits(prev => ({ ...prev, loading: false }));
+      }
+    }
+
+    fetchPassLimits();
+  }, []);
+
   const handleInputChange = (
     field: keyof FormData,
     value: string | boolean
@@ -126,12 +198,79 @@ export default function ApplyPage({ actionData }: Route.ComponentProps) {
     return required.every((field) => field.trim() !== "");
   };
 
+  // Check if selected pass type is available
+  const canApplyForPassType = () => {
+    if (passLimits.hasSpecialPrivilege) return true;
+    
+    if (formData.passType === "short") {
+      return passLimits.shortPassesRemaining > 0;
+    } else {
+      return passLimits.longPassesRemaining > 0;
+    }
+  };
+
+  // Get warning message if limit reached
+  const getLimitWarning = () => {
+    if (passLimits.hasSpecialPrivilege) return null;
+    
+    if (formData.passType === "short" && passLimits.shortPassesRemaining === 0) {
+      return "You have used all 2 short passes for this month. Please select a long pass or wait until next month.";
+    }
+    
+    if (formData.passType === "long" && passLimits.longPassesRemaining === 0) {
+      return "You have used your 1 long pass for this month. Please select a short pass or wait until next month.";
+    }
+    
+    return null;
+  };
+
   return (
     <div className="space-y-6 max-w-2xl text-gray-800">
       <DashboardHeaders
         mainText="Apply for Exit Pass"
         subText="Fill out the form below to request an exit pass"
       />
+
+      {/* Pass Limits Display */}
+      {!passLimits.loading && (
+        <Card className="bg-blue-50 border-blue-200">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-blue-900 mb-2">
+                  {passLimits.hasSpecialPrivilege 
+                    ? "Special Privilege Active" 
+                    : "Monthly Pass Limits"}
+                </h3>
+                {passLimits.hasSpecialPrivilege ? (
+                  <p className="text-sm text-blue-700">
+                    You have unlimited passes this month due to special privilege status.
+                  </p>
+                ) : (
+                  <div className="space-y-1 text-sm text-blue-700">
+                    <p>
+                      <strong>Short Passes:</strong> {passLimits.shortPassesRemaining} of 2 remaining
+                    </p>
+                    <p>
+                      <strong>Long Passes:</strong> {passLimits.longPassesRemaining} of 1 remaining
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Limit Warning Alert */}
+      {getLimitWarning() && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Pass Limit Reached</AlertTitle>
+          <AlertDescription>{getLimitWarning()}</AlertDescription>
+        </Alert>
+      )}
 
       <Form method="POST" className="space-y-6">
         {/* Pass Type Selection */}
@@ -152,22 +291,71 @@ export default function ApplyPage({ actionData }: Route.ComponentProps) {
                 handleInputChange("passType", value)
               }
               className="grid grid-cols-1 md:grid-cols-2 gap-4"
-              defaultValue="short" // Add this
+              defaultValue="short"
+              disabled={passLimits.loading}
             >
               <input type="hidden" name="passType" value={formData.passType} />
-              <div className="flex items-center space-x-2 border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors">
-                <RadioGroupItem value="short" id="short" />
-                <Label htmlFor="short" className="flex-1 cursor-pointer">
-                  <div className="font-medium text-gray-800">Short Pass</div>
+              
+              {/* Short Pass Option */}
+              <div className={`flex items-center space-x-2 border rounded-lg p-4 transition-colors ${
+                passLimits.shortPassesRemaining === 0 && !passLimits.hasSpecialPrivilege
+                  ? 'border-gray-300 bg-gray-50 opacity-50'
+                  : 'border-border hover:bg-muted/50'
+              }`}>
+                <RadioGroupItem 
+                  value="short" 
+                  id="short"
+                  disabled={passLimits.shortPassesRemaining === 0 && !passLimits.hasSpecialPrivilege}
+                />
+                <Label 
+                  htmlFor="short" 
+                  className={`flex-1 ${
+                    passLimits.shortPassesRemaining === 0 && !passLimits.hasSpecialPrivilege
+                      ? 'cursor-not-allowed'
+                      : 'cursor-pointer'
+                  }`}
+                >
+                  <div className="font-medium text-gray-800">
+                    Short Pass
+                    {!passLimits.hasSpecialPrivilege && (
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        ({passLimits.shortPassesRemaining} left)
+                      </span>
+                    )}
+                  </div>
                   <div className="text-sm text-muted-foreground">
                     Same day return (up to 12 hours)
                   </div>
                 </Label>
               </div>
-              <div className="flex items-center space-x-2 border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors">
-                <RadioGroupItem value="long" id="long" />
-                <Label htmlFor="long" className="flex-1 cursor-pointer">
-                  <div className="font-medium text-gray-800">Long Pass</div>
+
+              {/* Long Pass Option */}
+              <div className={`flex items-center space-x-2 border rounded-lg p-4 transition-colors ${
+                passLimits.longPassesRemaining === 0 && !passLimits.hasSpecialPrivilege
+                  ? 'border-gray-300 bg-gray-50 opacity-50'
+                  : 'border-border hover:bg-muted/50'
+              }`}>
+                <RadioGroupItem 
+                  value="long" 
+                  id="long"
+                  disabled={passLimits.longPassesRemaining === 0 && !passLimits.hasSpecialPrivilege}
+                />
+                <Label 
+                  htmlFor="long" 
+                  className={`flex-1 ${
+                    passLimits.longPassesRemaining === 0 && !passLimits.hasSpecialPrivilege
+                      ? 'cursor-not-allowed'
+                      : 'cursor-pointer'
+                  }`}
+                >
+                  <div className="font-medium text-gray-800">
+                    Long Pass
+                    {!passLimits.hasSpecialPrivilege && (
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        ({passLimits.longPassesRemaining} left)
+                      </span>
+                    )}
+                  </div>
                   <div className="text-sm text-muted-foreground">
                     Overnight stay (1+ days)
                   </div>
@@ -292,7 +480,7 @@ export default function ApplyPage({ actionData }: Route.ComponentProps) {
             </div>
 
             {formData.passType === "long" && (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="returnDate" className="text-gray-800">
                     Return Date *
@@ -404,27 +592,30 @@ export default function ApplyPage({ actionData }: Route.ComponentProps) {
           <AlertDescription>
             <strong>Important:</strong> All exit pass requests must be submitted
             at least 24 hours in advance. Emergency requests may be processed
-            faster but require additional documentation.<br/>
+            faster but require additional documentation.
           </AlertDescription>
         </Alert>
 
         {/* Submit Button */}
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row gap-4">
           <Button
             type="button"
             variant="outline"
-            onClick={() => navigate("/student-dashboard/apply-for-pass")}
+            onClick={() => navigate("/student-dashboard")}
             className="flex-1"
           >
             Cancel
           </Button>
           <Button
             type="submit"
-            disabled={!isFormValid() || isSubmitting}
+            disabled={!isFormValid() || isSubmitting || !canApplyForPassType() || passLimits.loading}
             className="flex-1"
           >
             {isSubmitting ? (
-              <Loader2 className="animate-spin" />
+              <>
+                <Loader2 className="animate-spin mr-2" />
+                Submitting...
+              </>
             ) : (
               "Submit Request"
             )}

@@ -1,138 +1,203 @@
+// Add this to your actions.ts or pass-utils.ts file
+
 import { supabase } from "supabase/supabase-client";
 
+interface PassLimitCheckResult {
+  allowed: boolean;
+  reason?: string;
+  shortPassCount: number;
+  longPassCount: number;
+  hasSpecialPrivilege: boolean;
+}
 
-export async function applyForStudentPass(formData: FormData, request: Request) {
-  // Get authenticated student
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
-    console.log("No user")
-    return { error: true, message: "You must be logged in to apply for a pass." };
-    
-  }
-
+/**
+ * Check if a student can apply for a pass this month (server-side validation)
+ */
+export async function checkPassLimitBeforeSubmit(
+  studentId: string,
+  passType: 'short' | 'long'
+): Promise<PassLimitCheckResult> {
   try {
-    const fd = Object.fromEntries(formData.entries());
-    console.log("This is fd: ", fd);
+    // Get current month-year
+    const now = new Date();
+    const monthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-  // Extract and parse values
-  const passType = fd.passType as string
-  const reason = fd.reason.toString().trim();
-  const destination = fd.destination.toString().trim();
-  const departureDate = fd.departureDate?.toString();
-  const departureTime = fd.departureTime?.toString();
-  const returnDate = fd.returnDate?.toString() || null;
-  const returnTime = fd.returnTime?.toString() || null;
-  const emergencyContact = fd.emergencyContact?.toString().trim(); // note: name="contactName" in your form
-  const emergencyPhone = fd.emergencyPhone?.toString().trim();
-  const additionalNotes = fd.additonalNotes?.toString().trim() || fd.additionalNotes?.toString().trim() || ""; // typo fix fallback
-  const parentNotification = true
+    // Check if student has special privilege
+    const { data: student, error: studentError } = await supabase
+      .from('student')
+      .select('has_special_privilege')
+      .eq('id', studentId)
+      .single();
 
-  // Server-side validation (never trust client)
-  if (!passType || !reason || !destination || !departureDate || !departureTime || !emergencyContact || !emergencyPhone) {
-    return { error: true, message: "Please fill in all required fields." };
+    if (studentError) {
+      throw new Error(`Failed to check student privileges: ${studentError.message}`);
+    }
+
+    // If student has special privilege, allow unlimited passes
+    if (student?.has_special_privilege) {
+      return {
+        allowed: true,
+        shortPassCount: 0,
+        longPassCount: 0,
+        hasSpecialPrivilege: true,
+      };
+    }
+
+    // Get pass limit tracking for current month
+    const { data: tracking, error: trackingError } = await supabase
+      .from('pass_limit_tracking')
+      .select('short_pass_count, long_pass_count')
+      .eq('student_id', studentId)
+      .eq('month_year', monthYear)
+      .maybeSingle();
+
+    if (trackingError) {
+      throw new Error(`Failed to check pass limits: ${trackingError.message}`);
+    }
+
+    const shortCount = tracking?.short_pass_count || 0;
+    const longCount = tracking?.long_pass_count || 0;
+
+    // Check limits based on pass type
+    if (passType === 'short' && shortCount >= 2) {
+      return {
+        allowed: false,
+        reason: 'You have reached the maximum of 2 short passes per month.',
+        shortPassCount: shortCount,
+        longPassCount: longCount,
+        hasSpecialPrivilege: false,
+      };
+    }
+
+    if (passType === 'long' && longCount >= 1) {
+      return {
+        allowed: false,
+        reason: 'You have reached the maximum of 1 long pass per month.',
+        shortPassCount: shortCount,
+        longPassCount: longCount,
+        hasSpecialPrivilege: false,
+      };
+    }
+
+    // Limits not reached, allow pass application
+    return {
+      allowed: true,
+      shortPassCount: shortCount,
+      longPassCount: longCount,
+      hasSpecialPrivilege: false,
+    };
+  } catch (error) {
+    console.error('Error checking pass limits:', error);
+    throw error;
   }
+}
 
-  if (passType === "long" && (!returnDate || !returnTime)) {
-    return { error: true, message: "Return date and time are required for long passes." };
-  }
+/**
+ * Updated applyForStudentPass function with pass limit validation
+ */
+export async function applyForStudentPass(formData: FormData, request: Request) {
+  try {
+    // Get authenticated user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
+    if (authError || !user) {
+      return {
+        error: true,
+        message: "You must be logged in to apply for a pass.",
+      };
+    }
 
-  // Fetch student profile to get guardian info and hostel
-  const { data: student, error: studentError } = await supabase
-    .from("student")
-    .select("id, guardian_name, guardian_phone_number, hostel_id, first_name")
-    .eq("id", user.id)
-    .single();
+    // Extract form data
+    const passType = formData.get('passType') as 'short' | 'long';
+    const reason = formData.get('reason') as string;
+    const destination = formData.get('destination') as string;
+    const departureDate = formData.get('departureDate') as string;
+    const departureTime = formData.get('departureTime') as string;
+    const returnDate = formData.get('returnDate') as string;
+    const returnTime = formData.get('returnTime') as string;
+    const emergencyContact = formData.get('emergencyContact') as string;
+    const emergencyPhone = formData.get('emergencyPhone') as string;
+    const additionalNotes = formData.get('additionalNotes') as string;
 
-  if (studentError || !student) {
-    console.error("Student not found:", studentError);
-    return { error: true, message: "Student profile not found." };
-  }
+    // Validate required fields
+    if (!passType || !reason || !destination || !departureDate || !departureTime || !emergencyContact || !emergencyPhone) {
+      return {
+        error: true,
+        message: "Please fill in all required fields.",
+      };
+    }
 
-  const { data: newPass, error: passError } = await supabase
-  .from("pass")
-  .insert({
-    type: passType,
-    student_id: student.id,
-    reason,
-    destination,
-    additional_notes: additionalNotes,
+    // Validate long pass return date/time
+    if (passType === 'long' && (!returnDate || !returnTime)) {
+      return {
+        error: true,
+        message: "Long passes require a return date and time.",
+      };
+    }
 
-    departure_date: departureDate,
-    departure_time: departureTime,
-    return_date: returnDate,
-    return_time: returnTime,
+    // ✅ CHECK PASS LIMITS BEFORE CREATING PASS
+    const limitCheck = await checkPassLimitBeforeSubmit(user.id, passType);
 
-    emergency_contact_name: emergencyContact,
-    emergency_contact_phone_number: emergencyPhone,
+    if (!limitCheck.allowed) {
+      return {
+        error: true,
+        message: limitCheck.reason || "Pass limit exceeded.",
+      };
+    }
 
-    status: "pending",
+    // Insert pass request
+    const { data: pass, error: passError } = await supabase
+      .from('pass')
+      .insert({
+        student_id: user.id,
+        type: passType,
+        reason,
+        destination,
+        departure_date: departureDate,
+        departure_time: departureTime,
+        return_date: passType === 'long' ? returnDate : null,
+        return_time: passType === 'long' ? returnTime : null,
+        emergency_contact_name: emergencyContact,
+        emergency_contact_phone_number: emergencyPhone,
+        additional_notes: additionalNotes,
+        status: 'pending',
+      })
+      .select()
+      .single();
 
-    // requested_at is DATE, so format it correctly
-    requested_at: new Date().toISOString().split("T")[0],
-  })
-  .select().single();
+    if (passError) {
+      console.error('Error creating pass:', passError);
+      return {
+        error: true,
+        message: passError.message || "Failed to submit pass request.",
+      };
+    }
 
-  if (passError || !newPass) {
-    console.error("Pass insertion error:", passError);
-    return { error: true, message: "Failed to submit pass request. Please try again." };
-  }
-
-  await supabase.from("audit_log").insert({
-    user_id: student.id,
-    action: "requested",
-  });
-
-
-  // TODO: Implement sending notification to only the porter of the students hostel
-  // Optional: Create system notification for staff/porter
-  // You can filter porters/CSO later based on hostel
-  const { data: staffMembers } = await supabase
-    .from("staff")
-    .select("id")
-    .in("role", ["DSA", "CSO", "Assistant CSO"]);
-
-  if (staffMembers?.length) {
-    const notifications = staffMembers.map(staff => ({
-      recipient_id: staff.id,
-      recipient_type: "staff",
-      pass_id: newPass.id,
-      message: `New ${passType} pass request from ${student.id}`,
-      type: "system",
-      sent: false,
-    }));
-
-    await supabase.from("notification").insert(notifications);
-  }
-
-  // If parent notification requested and guardian exists, queue SMS/email later
-
-  // TODO: Implement SMS and email notifications for parents
-  if (parentNotification && student.guardian_name && student.guardian_phone_number) {
-    await supabase.from("notification").insert({
-      recipient_id: student.id,
-      recipient_type: "student",
-      pass_id: newPass.id,
-      message: `WellSpring Guardian Notification: Your child ${student.first_name} has requested a ${passType} exit pass.`,
-      type: "system", // or email
+    // Log the action
+    await supabase.from('audit_log').insert({
+      user_id: user.id,
+      action: 'pass_requested',
+      entity_type: 'pass',
+      entity_id: pass.id,
       metadata: {
-        phone: student.guardian_phone_number,
-        name: student.guardian_name,
-        recipient_role: "guardian"
+        pass_type: passType,
+        destination,
       },
     });
-  }
 
-  return { error: false, pass: newPass };
+    // NOTE: Pass count will be incremented automatically by the database trigger
+    // when the pass status changes to 'cso_approved'
+
+    return {
+      error: false,
+      message: "Pass request submitted successfully!",
+      data: pass,
+    };
   } catch (error) {
-    console.log("Error applying for exit pass: ", error);
+    console.error('Unexpected error in applyForStudentPass:', error);
     return {
       error: true,
-      message: "Error applying for exit pass"
-
-    }
+      message: "An unexpected error occurred. Please try again.",
+    };
   }
-
-
-
 }
