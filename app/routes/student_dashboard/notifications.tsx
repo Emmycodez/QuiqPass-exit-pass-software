@@ -59,19 +59,7 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
       message,
       is_read,
       created_at,
-      pass:pass_id (   
-        id,
-        type,
-        destination,
-        status,
-        requested_at,
-        approved_at,
-        denied_at,
-        checked_out_at,
-        checked_in_at,
-        departure_date,
-        return_date
-      )
+      pass:pass_id(*)
     `
     )
     .eq("recipient_id", user.id)

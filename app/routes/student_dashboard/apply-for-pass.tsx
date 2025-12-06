@@ -405,6 +405,8 @@ export default function ApplyPage({ actionData }: Route.ComponentProps) {
             <strong>Important:</strong> All exit pass requests must be submitted
             at least 24 hours in advance. Emergency requests may be processed
             faster but require additional documentation.
+            You can only for a short pass twice a month.<br/>
+            You can only apply for a long pass once a month.
           </AlertDescription>
         </Alert>
 

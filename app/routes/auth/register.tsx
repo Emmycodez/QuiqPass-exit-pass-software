@@ -5,7 +5,7 @@ import { signupSchema } from "zod/signUp";
 import { data } from "react-router";
 import { supabase } from "supabase/supabase-client";
 
-export async function action({ request }: Route.ActionArgs) {
+export async function clientAction({ request }: Route.ClientActionArgs) {
   const formData = await request.formData();
 
   // Extract form data
@@ -76,13 +76,13 @@ export async function action({ request }: Route.ActionArgs) {
     if (usersError) {
       console.error("Users table error:", usersError);
       
-      // Cleanup: Delete the auth user if users table insert fails
-      await supabase.auth.admin.deleteUser(authData.user.id);
+      // Note: We can't delete the auth user from client-side
+      // The orphaned auth user won't be able to access anything without a profile
       
       return data(
         { 
           errors: { 
-            general: "Failed to create user profile. Please try again." 
+            general: "Failed to create user profile. Please try again or contact support." 
           } 
         },
         { status: 400 }
@@ -101,14 +101,13 @@ export async function action({ request }: Route.ActionArgs) {
     if (studentError) {
       console.error("Student table error:", studentError);
       
-      // Cleanup: Delete from users table and auth
+      // Cleanup: Delete from users table (auth user remains orphaned)
       await supabase.from("users").delete().eq("id", authData.user.id);
-      await supabase.auth.admin.deleteUser(authData.user.id);
       
       return data(
         { 
           errors: { 
-            general: "Failed to create student profile. Please try again." 
+            general: "Failed to create student profile. Please try again or contact support." 
           } 
         },
         { status: 400 }

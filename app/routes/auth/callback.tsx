@@ -1,214 +1,151 @@
-import React from "react";
-import { supabase } from "supabase/supabase-client";
-import { redirect, useNavigate } from "react-router";
+// app/routes/auth/callback.tsx
+
+import { redirect, type ActionFunctionArgs } from "react-router";
+import { createServerClient } from "@supabase/ssr";
 import Loader from "~/components/loader";
 
-export default function AuthCallback() {
-  const navigate = useNavigate();
-  
-  React.useEffect(() => {
-    const hash = window.location.hash;
+export async function clientAction({ request }: ActionFunctionArgs) {
+  // --- 1) Create Supabase server client using cookies ---
+  const supabase = createServerClient(
+    process.env.SUPABASE_URL!,
+    process.env.SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name) {
+          return request.headers.get("Cookie") ?? "";
+        },
+      },
+    }
+  );
 
-    async function handleOAuth() {
-      if (!hash) return redirect("/login");
+  // --- 2) Extract hash fragment tokens from request URL ---
+  const url = new URL(request.url);
+  const hash = url.hash;
 
-      const params = new URLSearchParams(hash.substring(1));
-      const access_token = params.get("access_token");
-      const refresh_token = params.get("refresh_token");
+  if (!hash) return redirect("/login");
 
-      if (!access_token || !refresh_token) {
-        window.location.replace("/login");
-        return;
-      }
+  const params = new URLSearchParams(hash.substring(1));
+  const access_token = params.get("access_token");
+  const refresh_token = params.get("refresh_token");
 
-      // Save Supabase session
-      const { error: sessionError } = await supabase.auth.setSession({
-        access_token,
-        refresh_token,
+  if (!access_token || !refresh_token) return redirect("/login");
+
+  // --- 3) Save session server-side ---
+  const { error: sessionError } = await supabase.auth.setSession({
+    access_token,
+    refresh_token,
+  });
+
+  if (sessionError) return redirect("/login");
+
+  // --- 4) Fetch authenticated user info ---
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) return redirect("/login");
+
+  // --- 5) Look up the unified user record ---
+  const { data: existingUser, error: lookupError } = await supabase
+    .from("users")
+    .select("id, user_type")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (lookupError) return redirect("/login");
+
+  // --- 6) User not found => create student by default ---
+  if (!existingUser) {
+    await supabase.from("users").insert({
+      id: user.id,
+      email: user.email!,
+      user_type: "student",
+    });
+
+    await supabase.from("student").insert({
+      id: user.id,
+      first_name: user.user_metadata?.full_name?.split(" ")[0] ?? "",
+      last_name:
+        user.user_metadata?.full_name?.split(" ").slice(1).join(" ") ?? "",
+      email: user.email!,
+      is_onboarded: false,
+    });
+
+    await supabase.from("audit_log").insert({
+      user_id: user.id,
+      action: "user_registered",
+      entity_type: "student",
+      entity_id: user.id,
+    });
+
+    return redirect("/onboarding");
+  }
+
+  // --- 7) Handle student login flow ---
+  if (existingUser.user_type === "student") {
+    const { data: student } = await supabase
+      .from("student")
+      .select("id, is_onboarded")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (!student) {
+      await supabase.from("student").insert({
+        id: user.id,
+        first_name: user.user_metadata?.full_name?.split(" ")[0] ?? "",
+        last_name:
+          user.user_metadata?.full_name?.split(" ").slice(1).join(" ") ?? "",
+        email: user.email!,
+        is_onboarded: false,
       });
-
-      if (sessionError) {
-        console.error("Error saving session:", sessionError.message);
-        window.location.replace("/login");
-        return;
-      }
-
-      // ✅ Get authenticated user info
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      const user = userData?.user;
-      
-      if (userError || !user) {
-        console.error("Error getting user:", userError?.message);
-        window.location.replace("/login");
-        return;
-      }
-
-      try {
-        // ✅ Check if user exists in unified users table
-        const { data: existingUser, error: userLookupError } = await supabase
-          .from("users")
-          .select("id, user_type")
-          .eq("id", user.id)
-          .maybeSingle();
-
-        if (userLookupError) {
-          console.error("User lookup error:", userLookupError.message);
-          return;
-        }
-
-        // ✅ If user doesn't exist in users table, create entries
-        if (!existingUser) {
-          // Create entry in users table (unified base table)
-          const { error: usersInsertError } = await supabase
-            .from("users")
-            .insert({
-              id: user.id,
-              email: user.email!,
-              user_type: "student", // Default to student for OAuth signups
-            });
-
-          if (usersInsertError) {
-            console.error("Users table insert error:", usersInsertError.message);
-            return;
-          }
-
-          // Create entry in student table
-          const { error: studentInsertError } = await supabase
-            .from("student")
-            .insert({
-              id: user.id,
-              first_name: user.user_metadata?.full_name?.split(" ")[0] ?? "",
-              last_name: user.user_metadata?.full_name?.split(" ").slice(1).join(" ") ?? "",
-              email: user.email!,
-              is_onboarded: false,
-            });
-
-          if (studentInsertError) {
-            console.error("Student creation error:", studentInsertError.message);
-            return;
-          }
-
-          // Log the registration
-          await supabase.from("audit_log").insert({
-            user_id: user.id,
-            action: "user_registered",
-            entity_type: "student",
-            entity_id: user.id,
-          });
-
-          // New students always go to onboarding
-          window.location.replace("/onboarding");
-          return;
-        }
-
-        // ✅ User exists - check their type and redirect accordingly
-        if (existingUser.user_type === "student") {
-          // Check student onboarding status - USE maybeSingle() NOT single()
-          const { data: student, error: studentError } = await supabase
-            .from("student")
-            .select("id, is_onboarded")
-            .eq("id", user.id)
-            .maybeSingle(); // ← CRITICAL: Use maybeSingle() not single()
-
-          if (studentError) {
-            console.error("Student lookup error:", studentError.message);
-            return;
-          }
-
-          // If no student record exists, create one
-          if (!student) {
-            console.log("Student record not found, creating...");
-            const { error: insertError } = await supabase
-              .from("student")
-              .insert({
-                id: user.id,
-                first_name: user.user_metadata?.full_name?.split(" ")[0] ?? "",
-                last_name: user.user_metadata?.full_name?.split(" ").slice(1).join(" ") ?? "",
-                email: user.email!,
-                is_onboarded: false,
-              });
-
-            if (insertError) {
-              console.error("Failed to create student record:", insertError.message);
-              return;
-            }
-
-            // Redirect to onboarding for new student
-            window.location.replace("/onboarding");
-            return;
-          }
-
-          // Log login
-          await supabase.from("audit_log").insert({
-            user_id: user.id,
-            action: "user_logged_in",
-            entity_type: "student",
-            entity_id: user.id,
-          });
-
-          // Redirect based on onboarding status
-          if (student.is_onboarded) {
-            navigate("/student-dashboard");
-          } else {
-            navigate("/onboarding");
-          }
-        } else if (existingUser.user_type === "staff") {
-          // Get staff info to determine role - USE maybeSingle() NOT single()
-          const { data: staff, error: staffError } = await supabase
-            .from("staff")
-            .select("id, role")
-            .eq("id", user.id)
-            .maybeSingle(); // ← CRITICAL: Use maybeSingle() not single()
-
-          if (staffError) {
-            console.error("Staff lookup error:", staffError.message);
-            return;
-          }
-
-          if (!staff) {
-            console.error("Staff record not found for user:", user.id);
-            window.location.replace("/login");
-            return;
-          }
-
-          // Log login
-          await supabase.from("audit_log").insert({
-            user_id: user.id,
-            action: "user_logged_in",
-            entity_type: "staff",
-            entity_id: user.id,
-          });
-
-          // Redirect based on staff role
-          switch (staff.role) {
-            case "DSA":
-              navigate("/dsa-dashboard");
-              break;
-            case "CSO":
-            case "Assistant CSO":
-              navigate("/cso-dashboard");
-              break;
-            case "porter":
-              navigate("/porter-dashboard");
-              break;
-            case "Security":
-              navigate("/security-dashboard");
-              break;
-            case "overseer":
-              navigate("/overseer-dashboard");
-              break;
-            default:
-              navigate("/staff-dashboard");
-          }
-        }
-      } catch (error) {
-        console.error("Unexpected error during auth:", error);
-        window.location.replace("/login");
-      }
+      return redirect("/onboarding");
     }
 
-    handleOAuth();
-  }, [navigate]);
+    await supabase.from("audit_log").insert({
+      user_id: user.id,
+      action: "user_logged_in",
+      entity_type: "student",
+      entity_id: user.id,
+    });
 
+    if (student.is_onboarded) return redirect("/student-dashboard");
+    return redirect("/onboarding");
+  }
+
+  // --- 8) Handle staff login flow ---
+  const { data: staff } = await supabase
+    .from("staff")
+    .select("id, role")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (!staff) return redirect("/login");
+
+  await supabase.from("audit_log").insert({
+    user_id: user.id,
+    action: "user_logged_in",
+    entity_type: "staff",
+    entity_id: user.id,
+  });
+
+  switch (staff.role) {
+    case "DSA":
+      return redirect("/dsa-dashboard");
+    case "CSO":
+    case "Assistant CSO":
+      return redirect("/cso-dashboard");
+    case "porter":
+      return redirect("/porter-dashboard");
+    case "Security":
+      return redirect("/security-dashboard");
+    case "overseer":
+      return redirect("/overseer-dashboard");
+    default:
+      return redirect("/staff-dashboard");
+  }
+}
+
+export default function AuthCallback() {
   return <Loader />;
 }
