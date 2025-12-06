@@ -132,7 +132,7 @@ const StudentDashboard = ({
 
         {/* Recent Passes */}
         <Card className="text-gray-800 bg-gray-50">
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div className="text-gray-800">
               <CardTitle className="text-blue-950 text-lg font-semibold">
                 Recent Requests
@@ -160,9 +160,9 @@ const StudentDashboard = ({
                 recentPasses.map((request) => (
                   <div
                     key={request.id}
-                    className="flex items-center justify-between p-4 border border-border rounded-lg "
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border border-border rounded-lg"
                   >
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-start sm:items-center gap-3 sm:gap-4">
                       {getStatusIcon(request.status)}
                       <div>
                         <div className="flex items-center gap-2">
@@ -179,7 +179,7 @@ const StudentDashboard = ({
                               request.status.slice(1)}
                           </Badge>
                         </div>
-                        <div className="flex items-center gap-4 text-sm mt-1">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-sm mt-1">
                           <span className="flex items-center gap-1">
                             <MapPin className="h-3 w-3" />
                             {request.destination}
@@ -200,7 +200,7 @@ const StudentDashboard = ({
                         </div>
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-left sm:text-right w-full sm:w-auto">
                       <p className="text-sm ">
                         Submitted{" "}
                         {new Date(request.requested_at).toLocaleDateString()}

@@ -38,7 +38,6 @@ type NotificationRow = {
 };
 
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
-
   // 1. Auth check
   const {
     data: { user },
@@ -135,7 +134,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
       toast.success("All notifications marked as read");
 
-      return null
+      return null;
     }
 
     if (intent === "delete") {
@@ -204,7 +203,6 @@ export default function NotificationsPage({
 }: Route.ComponentProps) {
   const { notifications, error } = loaderData;
   const [searchQuery, setSearchQuery] = useState("");
-  
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
@@ -246,11 +244,11 @@ export default function NotificationsPage({
           <CardDescription>Updates about your passes</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-3 mb-4">
+          <div className="flex flex-col sm:flex-row gap-3 mb-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by pass id, destination or message..."
+                placeholder="Search notifications..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
@@ -260,7 +258,9 @@ export default function NotificationsPage({
             {unreadCount > 0 && (
               <Form method="post">
                 <input type="hidden" name="intent" value="mark-all-read" />
-                <Button type="submit">Mark all as read</Button>
+                <Button type="submit" className="w-full sm:w-auto">
+                  Mark all as read
+                </Button>
               </Form>
             )}
           </div>
@@ -275,85 +275,116 @@ export default function NotificationsPage({
               {filtered.map((n) => (
                 <div
                   key={n.id}
-                  className={`flex items-start gap-4 p-4 border rounded-lg transition-colors ${n.is_read ? "bg-background border-border" : "bg-muted/50 border-primary/20"}`}
+                  className={`flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4 p-3 sm:p-4 border rounded-lg transition-colors ${
+                    n.is_read
+                      ? "bg-background border-border"
+                      : "bg-muted/50 border-primary/20"
+                  }`}
                 >
-                  <div className="mt-0.5">{getNotificationIcon(n.type)}</div>
+                  {/* Icon - Hidden on mobile, shown on larger screens */}
+                  <div className="hidden sm:block mt-0.5">
+                    {getNotificationIcon(n.type)}
+                  </div>
 
                   <div className="flex-1 space-y-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
+                    {/* Header Section */}
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-2">
+                      <div className="flex-1 space-y-2">
+                        {/* Badge Row */}
+                        <div className="flex items-center flex-wrap gap-2">
                           <Badge
                             variant="outline"
-                            className="bg-primary/10 text-primary border-primary/20 text-md"
+                            className="bg-primary/10 text-primary border-primary/20 text-xs sm:text-sm"
                           >
-                            {n.pass?.type == "short"
+                            {n.pass?.type === "short"
                               ? "Short Pass"
-                              : n.pass?.type == "long"
+                              : n.pass?.type === "long"
                                 ? "Long Pass"
                                 : "Pass"}
                           </Badge>
 
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-xs text-muted-foreground truncate max-w-[150px] sm:max-w-none">
                             {n.pass?.destination ?? "—"}
                           </span>
+
                           {!n.is_read && (
                             <span
-                              className="h-2 w-2 rounded-full bg-primary"
+                              className="h-2 w-2 rounded-full bg-primary flex-shrink-0"
                               title="Unread"
                             />
                           )}
                         </div>
 
-                        <p className="text-sm text-foreground">{n.message}</p>
+                        {/* Message */}
+                        <p className="text-sm text-foreground leading-relaxed">
+                          {n.message}
+                        </p>
+
+                        {/* Pass ID */}
                         {n.pass && (
-                          <p className="text-xs text-muted-foreground mt-1">
+                          <p className="text-xs text-muted-foreground">
                             Pass:{" "}
                             <span className="font-mono">
                               {n.pass.id.slice(0, 8)}...
                             </span>
                           </p>
                         )}
+
+                        {/* Timestamp - Show on mobile below content */}
+                        <p className="text-xs text-muted-foreground sm:hidden">
+                          {formatTimestamp(n.created_at)}
+                        </p>
                       </div>
 
-                      {!n.is_read && (
-                        <Form method="post">
-                          <input
-                            type="hidden"
-                            name="intent"
-                            value="mark-read"
-                          />
+                      {/* Action Buttons - Stack on mobile */}
+                      <div className="flex flex-row sm:flex-col gap-2 items-stretch sm:items-end">
+                        {!n.is_read && (
+                          <Form
+                            method="post"
+                            className="flex-1 sm:flex-initial"
+                          >
+                            <input
+                              type="hidden"
+                              name="intent"
+                              value="mark-read"
+                            />
+                            <input
+                              type="hidden"
+                              name="notificationId"
+                              value={n.id}
+                            />
+                            <Button
+                              type="submit"
+                              size="sm"
+                              className="w-full sm:w-auto text-xs sm:text-sm"
+                            >
+                              <span className="sm:mr-1">Mark read</span>
+                              <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                            </Button>
+                          </Form>
+                        )}
+
+                        <Form method="post" className="flex  flex-col">
+                          <input type="hidden" name="intent" value="delete" />
                           <input
                             type="hidden"
                             name="notificationId"
                             value={n.id}
                           />
-                          <Button type="submit" className="text-sm" size="sm">
-                            Mark as read
-                            <Trash2 />
+                          <Button
+                            type="submit"
+                            size="sm"
+                            variant="destructive"
+                            className="w-full sm:w-auto text-xs sm:text-sm"
+                          >
+                            Delete
                           </Button>
                         </Form>
-                      )}
-
-                      <Form method="post">
-                        <input type="hidden" name="intent" value="delete" />
-                        <input
-                          type="hidden"
-                          name="notificationId"
-                          value={n.id}
-                        />
-                        <Button
-                          type="submit"
-                          size="sm"
-                          variant="destructive"
-                          className="text-xs ml-2"
-                        >
-                          Delete
-                        </Button>
-                      </Form>
+                      </div>
                     </div>
 
-                    <p className="text-xs text-muted-foreground">
+                    {/* Timestamp - Show on desktop at bottom */}
+                    <p className="hidden sm:block text-xs text-muted-foreground">
                       {formatTimestamp(n.created_at)}
                     </p>
                   </div>
