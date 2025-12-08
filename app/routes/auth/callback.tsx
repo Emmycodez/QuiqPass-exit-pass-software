@@ -1,44 +1,35 @@
 // app/routes/auth/callback.tsx
 
-import { redirect, type ActionFunctionArgs } from "react-router";
-import { createServerClient } from "@supabase/ssr";
+import {
+  redirect,
+  type ClientLoaderFunctionArgs,
+  type LoaderFunctionArgs,
+} from "react-router";
+import { supabase } from "supabase/supabase-client";
 import Loader from "~/components/loader";
 
-export async function clientAction({ request }: ActionFunctionArgs) {
-  // --- 1) Create Supabase server client using cookies ---
-  const supabase = createServerClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name) {
-          return request.headers.get("Cookie") ?? "";
-        },
-      },
-    }
-  );
+export async function clientLoader({ request }: ClientLoaderFunctionArgs) {
+  // // --- 2) Extract hash fragment tokens from request URL ---
+  // const url = new URL(request.url);
+  // const hash = url.hash;
 
-  // --- 2) Extract hash fragment tokens from request URL ---
-  const url = new URL(request.url);
-  const hash = url.hash;
+  // if (!hash) return redirect("/login");
 
-  if (!hash) return redirect("/login");
+  // const params = new URLSearchParams(hash.substring(1));
+  // const access_token = params.get("access_token");
+  // const refresh_token = params.get("refresh_token");
 
-  const params = new URLSearchParams(hash.substring(1));
-  const access_token = params.get("access_token");
-  const refresh_token = params.get("refresh_token");
+  // if (!access_token || !refresh_token) return redirect("/login");
 
-  if (!access_token || !refresh_token) return redirect("/login");
+  // // --- 3) Save session server-side ---
+  // const { error: sessionError } = await supabase.auth.setSession({
+  //   access_token,
+  //   refresh_token,
+  // });
 
-  // --- 3) Save session server-side ---
-  const { error: sessionError } = await supabase.auth.setSession({
-    access_token,
-    refresh_token,
-  });
+  // if (sessionError) return redirect("/login");
 
-  if (sessionError) return redirect("/login");
-
-  // --- 4) Fetch authenticated user info ---
+  // // --- 4) Fetch authenticated user info ---
   const {
     data: { user },
     error: userError,
@@ -146,6 +137,10 @@ export async function clientAction({ request }: ActionFunctionArgs) {
   }
 }
 
-export default function AuthCallback() {
+export function HydrateFallback() {
   return <Loader />;
+}
+
+export default function AuthCallback() {
+  return <div>..................</div>;
 }

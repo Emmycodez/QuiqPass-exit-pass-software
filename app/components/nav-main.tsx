@@ -1,4 +1,9 @@
-import { MailIcon, PlusCircleIcon, type LucideIcon } from "lucide-react";
+import {
+  CheckCircle,
+  MailIcon,
+  PlusCircleIcon,
+  type LucideIcon,
+} from "lucide-react";
 import type { Icon } from "@tabler/icons-react";
 
 import { Button } from "~/components/ui/button";
@@ -20,6 +25,7 @@ export function NavMain({
     url: string;
     icon?: LucideIcon | Icon;
     unread?: number | undefined;
+    route?: string;
   }[];
 }) {
   return (
@@ -27,18 +33,33 @@ export function NavMain({
       <SidebarGroupContent className="flex flex-col gap-2">
         <SidebarMenu>
           <SidebarMenuItem className="flex items-center gap-2">
-            <SidebarMenuButton
-              tooltip="Apply For Pass"
-              className="min-w-8 bg-primary text-primary-foreground duration-200 ease-linear hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
-            >
-              <Link
-                to="/student-dashboard/apply-for-pass"
-                className="flex items-center gap-2 cursor-pointer"
+            {items[0].route === "dsa-dashboard" ? (
+              <SidebarMenuButton
+                tooltip="Apply For Pass"
+                className="min-w-8 bg-primary text-primary-foreground duration-200 ease-linear hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
               >
-                <PlusCircleIcon />
-                <span>Apply For Pass</span>
-              </Link>
-            </SidebarMenuButton>
+                <Link
+                  to="/dsa-dashboard"
+                  className="flex items-center gap-2 cursor-pointer"
+                >
+                  <CheckCircle className="w-4 h-4"/>
+                  <span>D.S.A Dashboard</span>
+                </Link>
+              </SidebarMenuButton>
+            ) : (
+              <SidebarMenuButton
+                tooltip="Apply For Pass"
+                className="min-w-8 bg-primary text-primary-foreground duration-200 ease-linear hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
+              >
+                <Link
+                  to="/student-dashboard/apply-for-pass"
+                  className="flex items-center gap-2 cursor-pointer"
+                >
+                  <PlusCircleIcon />
+                  <span>Apply For Pass</span>
+                </Link>
+              </SidebarMenuButton>
+            )}
             <Button
               size="icon"
               className="h-9 w-9 shrink-0 group-data-[collapsible=icon]:opacity-0"

@@ -16,7 +16,6 @@ import {
 } from "@tabler/icons-react";
 import { Outlet, useLoaderData, redirect } from "react-router";
 import { supabase } from "supabase/supabase-client";
-// import { AppSidebar } from "~/components/app-sidebar"; // REMOVE THIS
 import CustomSidebar from "~/components/global/custom-sidebar";
 import { NavMain } from "~/components/nav-main";
 import { NavUser } from "~/components/nav-user";

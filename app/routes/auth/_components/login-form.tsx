@@ -1,3 +1,4 @@
+import { ExternalLink } from "lucide-react";
 import { FaGoogle } from "react-icons/fa";
 import { useNavigation } from "react-router";
 import { Form, Link, useActionData } from "react-router";
@@ -96,6 +97,14 @@ const LoginForm = () => {
         Don't have an account yet?
         <Link to="/register" className="underline underline-offset-4 ml-2">
           Register
+        </Link>
+      </div>
+      {/* Link to staff login page */}
+      <div className="text-center text-md font-md flex justify-center items-center">
+        Are you a staff?
+        <Link to="/staff-login" className="underline underline-offset-4 ml-2 flex items-center justify-center font-semibold">
+          Login here
+          <ExternalLink className="ml-2 w-4 h-4" />
         </Link>
       </div>
     </Form>
