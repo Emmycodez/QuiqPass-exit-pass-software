@@ -3,7 +3,6 @@ import { redirect } from "react-router";
 import { supabase } from "supabase/supabase-client";
 import { Skeleton } from "~/components/ui/skeleton";
 
-// TODO: Optimize db by creating one user table with roles for singular query
 export async function clientLoader() {
   // 1️⃣ Get the current logged-in user
   const {

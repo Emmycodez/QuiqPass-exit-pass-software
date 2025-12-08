@@ -13,7 +13,7 @@ export default function Logo({
       <Link to="/" className="flex items-center space-x-2">
         <div className="bg-blue-500 rounded-full p-2">
           <span className="font-bold text-xl text-white">
-            <FastForward className={cn("w-6 h-6", size === "lg" && "w-10 h-10")} />
+            <FastForward className={cn("w-4 h-4 md:w-6 md:h-6", size === "lg" && "w-10 h-10")} />
           </span>
         </div>
         <span className={cn(" font-bold text-xl italic", size === "lg" && "text-4xl")}>

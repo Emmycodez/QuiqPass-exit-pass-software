@@ -1,69 +1,112 @@
 import { useState } from "react";
-import { Form, data } from "react-router";
+import { Form, data, redirect } from "react-router";
 import { supabase } from "supabase/supabase-client";
 import Logo from "~/components/global/logo";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Alert, AlertDescription } from "~/components/ui/alert";
-import { CheckCircle, Mail, AlertCircle } from "lucide-react";
+import { AlertCircle, Lock, Mail } from "lucide-react";
 import type { Route } from "./+types/staff-login";
 
 
-/*
-Dsa Login Credentials: email: dsa@welsu.edu.ng, password: password123
-*/
 
 export async function clientAction({ request }: Route.ClientActionArgs) {
   const formData = await request.formData();
-  const email = String(formData.get("email"));
+  const email = String(formData.get("email")).trim();
+  const password = String(formData.get("password"));
 
-  // Validate email
-  if (!email || !email.includes("@")) {
+  // Enhanced email validation - supports all valid TLDs including .ng
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  
+  if (!email || !emailRegex.test(email)) {
     return data(
       { 
         error: "Please enter a valid email address.",
-        success: false ,
-        message: null
+      },
+      { status: 400 }
+    );
+  }
+
+  if (!password || password.length < 6) {
+    return data(
+      { 
+        error: "Password must be at least 6 characters.",
       },
       { status: 400 }
     );
   }
 
   try {
-    // Send magic link
-    const { error } = await supabase.auth.signInWithOtp({
+    // Sign in with email and password
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
+      password,
     });
 
-    if (error) {
+    if (authError) {
+      console.error("Authentication error:", authError);
       return data(
         { 
-          error: error.message,
-          success: false ,
-          message: null
+          error: authError.message === "Invalid login credentials" 
+            ? "Invalid email or password. Please try again."
+            : authError.message,
         },
         { status: 400 }
       );
     }
 
+    if (!authData.user) {
+      return data(
+        { 
+          error: "Login failed. Please try again.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Verify user is staff
+    const { data: staff, error: staffError } = await supabase
+      .from("staff")
+      .select("role, first_name, last_name")
+      .eq("id", authData.user.id)
+      .single();
+
+    if (staffError || !staff) {
+      // Sign out if not a staff member
+      await supabase.auth.signOut();
+      return data(
+        { 
+          error: "Access denied. This login is for staff members only.",
+        },
+        { status: 403 }
+      );
+    }
+
+    // Redirect based on role
+    switch (staff.role) {
+      case "DSA":
+        throw redirect("/dsa-dashboard");
+      case "CSO":
+      case "Assistant CSO":
+        throw redirect("/cso-dashboard");
+      case "porter":
+        throw redirect("/porter-dashboard");
+      case "Security":
+        throw redirect("/security-dashboard");
+      default:
+        throw redirect("/dashboard");
+    }
+  } catch (error: any) {
+    // If it's a redirect, throw it
+    if (error?.status === 302 || error instanceof Response) {
+      throw error;
+    }
+
+    console.error("Login error:", error);
     return data(
       { 
-        success: true,
-        message: "Check your email for the login link!",
-        error: null
-      },
-      { status: 200 }
-    );
-  } catch (error) {
-    return data(
-      { 
-        error: "Failed to send login link. Please try again.",
-        success: false ,
-        message: null
+        error: "An unexpected error occurred. Please try again.",
       },
       { status: 500 }
     );
@@ -72,6 +115,8 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
 export default function StaffLoginPage({ actionData }: Route.ComponentProps) {
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   return (
     <div className="grid min-h-svh lg:grid-cols-[2fr_1fr]">
@@ -93,19 +138,9 @@ export default function StaffLoginPage({ actionData }: Route.ComponentProps) {
               <div className="text-center mb-6">
                 <h1 className="text-2xl font-bold text-gray-900">Staff Login</h1>
                 <p className="text-gray-600 mt-2">
-                  Enter your official email to receive a login link
+                  Enter your credentials to access the system
                 </p>
               </div>
-
-              {/* Success Message */}
-              {actionData?.success && (
-                <Alert className="mb-6 bg-green-50 border-green-200">
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                  <AlertDescription className="text-green-800">
-                    {actionData.message}
-                  </AlertDescription>
-                </Alert>
-              )}
 
               {/* Error Message */}
               {actionData?.error && (
@@ -115,52 +150,66 @@ export default function StaffLoginPage({ actionData }: Route.ComponentProps) {
                 </Alert>
               )}
 
-              {!actionData?.success ? (
-                <Form method="post" className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Official Email Address</Label>
+              <Form method="post" className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Official Email Address</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
                       id="email"
                       name="email"
                       type="email"
-                      placeholder="your.name@oau.edu.ng"
+                      placeholder="your.name@welsu.edu.ng"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
+                      className="pl-10"
+                      pattern="[^\s@]+@[^\s@]+\.[^\s@]{2,}"
+                      title="Please enter a valid email address"
                       required
+                      autoComplete="email"
                     />
-                    <p className="text-xs text-gray-500">
-                      Use your official university email address
-                    </p>
                   </div>
-
-                  <Button type="submit" className="w-full">
-                    <Mail className="mr-2 h-4 w-4" />
-                    Send Login Link
-                  </Button>
-                </Form>
-              ) : (
-                <div className="space-y-4">
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <h3 className="font-semibold text-blue-900 mb-2">
-                      What's next?
-                    </h3>
-                    <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
-                      <li>Check your email inbox ({email})</li>
-                      <li>Click the "Log in to Wellspring" link</li>
-                      <li>You'll be automatically logged in</li>
-                    </ol>
-                  </div>
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => window.location.reload()}
-                  >
-                    Send another link
-                  </Button>
                 </div>
-              )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="password"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="pl-10 pr-10"
+                      required
+                      autoComplete="current-password"
+                      minLength={6}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      {showPassword ? (
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                        </svg>
+                      ) : (
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <Button type="submit" className="w-full">
+                  Sign In
+                </Button>
+              </Form>
 
               <div className="mt-6 text-center">
                 <a

@@ -89,6 +89,8 @@ type StudentLoaderData = Exclude<
   Response
 >;
 
+
+// TODO: Implement recent pass fetch details when a recent pass is clicked 
 const StudentDashboard = ({
   loaderData,
 }: {

@@ -356,7 +356,7 @@ export default function RequestsPage({ loaderData }: Route.ComponentProps) {
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto pt-[20px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
@@ -380,7 +380,7 @@ export default function RequestsPage({ loaderData }: Route.ComponentProps) {
                 {selectedRequest && selectedRequest.status === "pending" && (
                   <Form
                     method="post"
-                    className="pt-4"
+                    className="pt-4 flex flex-col items-center justify-center"
                     action="/student-dashboard/my-pass-requests"
                   >
                     <input type="hidden" name="intent" value="delete-pass" />
