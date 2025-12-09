@@ -123,15 +123,15 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
         .eq("id", passId)
         .eq("student_id", userId);
 
-        if(deleteError) {
-          return deleteError.message;
-        }
+      if (deleteError) {
+        return deleteError.message;
+      }
     }
 
     toast.promise(deleteRequest(user.id, passId), {
       loading: "Deleting Request....",
       success: "Request Deleted Successfully",
-      error: `Error Deleting Request`
+      error: `Error Deleting Request`,
     });
 
     // toast.success("Exit pass has beeen successfully deleted");
@@ -376,40 +376,40 @@ export default function RequestsPage({ loaderData }: Route.ComponentProps) {
                     {selectedRequest.id.slice(0, 8)}...
                   </p>
                 </div>
-
-                {selectedRequest && selectedRequest.status === "pending" && (
-                  <Form
-                    method="post"
-                    className="pt-4 flex flex-col items-center justify-center"
-                    action="/student-dashboard/my-pass-requests"
-                  >
-                    <input type="hidden" name="intent" value="delete-pass" />
-                    <input
-                      type="hidden"
-                      name="passId"
-                      value={selectedRequest.id}
-                    />
-
-                    <Button
-                      variant="destructive"
-                      className="w-full"
-                      onClick={() => setIsDialogOpen(false)}
+                <div className="flex flex-col md:flex-row md:gap-6 items-center justify-center gap-2">
+                  {selectedRequest && selectedRequest.status === "pending" && (
+                    <Form
+                      method="post"
+                      className="pt-4"
+                      action="/student-dashboard/my-pass-requests"
                     >
-                      Delete Request
-                    </Button>
-                  </Form>
-                )}
+                      <input type="hidden" name="intent" value="delete-pass" />
+                      <input
+                        type="hidden"
+                        name="passId"
+                        value={selectedRequest.id}
+                      />
+                      <Button
+                        variant="destructive"
+                        className="w-full"
+                        onClick={() => setIsDialogOpen(false)}
+                      >
+                        Delete Request
+                      </Button>
+                    </Form>
+                  )}
 
-                <Badge
-                  variant="outline"
-                  className={getStatusColor(selectedRequest.status)}
-                >
-                  <span className="flex items-center gap-1">
-                    {getStatusIcon(selectedRequest.status)}
-                    {selectedRequest.status.charAt(0).toUpperCase() +
-                      selectedRequest.status.slice(1)}
-                  </span>
-                </Badge>
+                  <Badge
+                    variant="outline"
+                    className={getStatusColor(selectedRequest.status)}
+                  >
+                    <span className="flex items-center gap-1 p-2 text-md">
+                      {getStatusIcon(selectedRequest.status)}
+                      {selectedRequest.status.charAt(0).toUpperCase() +
+                        selectedRequest.status.slice(1)}
+                    </span>
+                  </Badge>
+                </div>
               </div>
 
               <Separator />

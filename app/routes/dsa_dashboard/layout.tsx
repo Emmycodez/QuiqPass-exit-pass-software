@@ -1,5 +1,4 @@
 import {
-  IconBell,
   IconCamera,
   IconChartBar,
   IconDashboard,
@@ -14,12 +13,11 @@ import {
   IconSettings,
   IconUsers,
 } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
-import { Outlet, useLoaderData, redirect } from "react-router";
-import { supabase } from "supabase/supabase-client";
+import { useState } from "react";
+import { Outlet } from "react-router";
 import CustomSidebar from "~/components/global/custom-sidebar";
+import { SidebarFeedbackForm } from "~/components/global/sidebar-form";
 import { NavMain } from "~/components/nav-main";
-import { NavUser } from "~/components/nav-user";
 // TODO: Implement protected route logic
 
 // export async function clientLoader() {
@@ -73,71 +71,66 @@ import { NavUser } from "~/components/nav-user";
 //   Response
 // >;
 
- 
-
 const DsaDashboardLayout = () => {
-
   const [profile, setProfile] = useState({
     first_name: "",
     last_name: "",
     email: "",
     photo_url: "",
-    role: "", 
+    role: "",
   });
   const [unreadCount, setUnreadCount] = useState(0);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     const {
+  //       data: { user },
+  //     } = await supabase.auth.getUser();
 
-      if (!user) {
-        console.log("There is no user logged in yet")
-        // window.location.href = "/staff-login";
-        return redirect("/staff-login");
-      }
-      console.log("This is the supabase user: ", user)
+  //     if (!user) {
+  //       console.log("There is no user logged in yet")
+  //       // window.location.href = "/staff-login";
+  //       return redirect("/staff-login");
+  //     }
+  //     console.log("This is the supabase user: ", user)
 
-      // Fetch staff profile
-      const { data: staff } = await supabase
-        .from("staff")
-        .select("first_name, last_name, email, photo_url, role")
-        .eq("id", user.id)
-        .single();
+  //     // Fetch staff profile
+  //     const { data: staff } = await supabase
+  //       .from("staff")
+  //       .select("first_name, last_name, email, photo_url, role")
+  //       .eq("id", user.id)
+  //       .single();
 
-      if (!staff || staff.role !== "DSA") {
-        window.location.href = "/staff-login";
-        return;
-      }
+  //     if (!staff || staff.role !== "DSA") {
+  //       window.location.href = "/staff-login";
+  //       return;
+  //     }
 
-      // Fetch unread notifications
-      const { count: unread } = await supabase
-        .from("notification")
-        .select("id", { count: "exact", head: true })
-        .eq("recipient_id", user.id)
-        .eq("recipient_type", "staff")
-        .eq("is_read", false);
+  //     // Fetch unread notifications
+  //     const { count: unread } = await supabase
+  //       .from("notification")
+  //       .select("id", { count: "exact", head: true })
+  //       .eq("recipient_id", user.id)
+  //       .eq("recipient_type", "staff")
+  //       .eq("is_read", false);
 
-      setProfile(staff);
-      setUnreadCount(unread ?? 0);
-    };
+  //     setProfile(staff);
+  //     setUnreadCount(unread ?? 0);
+  //   };
 
-    fetchData();
-  }, []);
-
+  //   fetchData();
+  // }, []);
 
   const gradientStyle = {
     background: "radial-gradient(125% 125% at 50% 10%,#ffffff 40%,#a78bfa 100%",
   };
-
 
   const data = {
     user: {
       name: profile.first_name + " " + profile.last_name,
       email: profile.email,
       avatar: profile.photo_url || undefined,
-      unread:  unreadCount > 0 ? unreadCount : undefined
+      unread: unreadCount > 0 ? unreadCount : undefined,
     },
     navMain: [
       {
@@ -160,12 +153,6 @@ const DsaDashboardLayout = () => {
         title: "Students",
         url: "/dsa-dashboard/students",
         icon: IconUsers,
-      },
-      {
-        title: "Notifications",
-        url: "/dsa-dashboard/notifications",
-        icon: IconBell,
-        unread: unreadCount > 0 ? unreadCount : undefined,
       },
       {
         title: "Settings",
@@ -270,9 +257,13 @@ const DsaDashboardLayout = () => {
 
       {/* Sidebar and content */}
       <div className="relative z-10">
-        <CustomSidebar gradientStyle={gradientStyle}>
+        <CustomSidebar
+          gradientStyle={gradientStyle}
+          sidebarFooter={<SidebarFeedbackForm />}
+        >
           <NavMain items={data.navMain} />
-          <NavUser user={data.user} />
+          <SidebarFeedbackForm />
+          {/* <NavUser user={data.user} /> */}
         </CustomSidebar>
 
         {/* Content Area - Add left margin to push it away from fixed sidebar */}

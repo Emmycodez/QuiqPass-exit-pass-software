@@ -34,7 +34,7 @@ export interface RawPassRequest {
     last_name: string;
     matric_no: string;
     hostel: { name: string } | null;
-  };
+  } | null;
 }
 
 interface PassRequest {
@@ -50,19 +50,15 @@ interface PassRequest {
     first_name: string;
     last_name: string;
     matric_no: string;
-    hostel: { name: string } | null;
+    hostel: {
+      name: string;
+    } | null;
   };
-}
-
-export function HydrateFallback () {
-  return <Loader/>
 }
 
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   try {
-    // -----------------------------
-    // 1. Authentication
-    // -----------------------------
+    // Check authentication
     const {
       data: { user },
       error: authError,
@@ -72,9 +68,7 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
       throw redirect("/staff-login");
     }
 
-    // -----------------------------
-    // 2. Ensure Staff is DSA
-    // -----------------------------
+    // Verify user is DSA
     const { data: staff, error: staffError } = await supabase
       .from("staff")
       .select("role")
@@ -82,18 +76,17 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
       .single();
 
     if (staffError || staff?.role !== "DSA") {
+      console.log("Unauthorized access attempt to DSA dashboard");
       throw redirect("/login");
     }
 
-    // -----------------------------
-    // 3. Date Helpers
-    // -----------------------------
+    // Get today's date range
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
+    // Get current month date range
     const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
     const monthEnd = new Date(
       today.getFullYear(),
@@ -104,58 +97,72 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
       59
     );
 
-    // -----------------------------
-    // 4. Dashboard Counts
-    // -----------------------------
-    const [
-      { data: pendingPasses },
-      { data: dsaApprovedToday },
-      { data: csoApprovedToday },
-      { data: csoDeniedToday },
-      { data: deniedToday },
-      { data: totalRequests },
-    ] = await Promise.all([
-      supabase.from("pass").select("id").eq("status", "pending"),
-      supabase
-        .from("pass")
-        .select("id")
-        .eq("status", "dsa_approved")
-        .gte("dsa_approved_at", today.toISOString())
-        .lt("dsa_approved_at", tomorrow.toISOString()),
-      supabase
-        .from("pass")
-        .select("id")
-        .eq("status", "cso_approved")
-        .gte("cso_approved_at", today.toISOString())
-        .lt("cso_approved_at", tomorrow.toISOString()),
-      supabase
-        .from("pass")
-        .select("id")
-        .eq("status", "rejected")
-        .eq("rejected_by_role", "CSO")
-        .gte("rejected_at", today.toISOString())
-        .lt("rejected_at", tomorrow.toISOString()),
-      supabase
-        .from("pass")
-        .select("id")
-        .eq("status", "rejected")
-        .eq("rejected_by_role", "DSA")
-        .gte("rejected_at", today.toISOString())
-        .lt("rejected_at", tomorrow.toISOString()),
-      supabase
-        .from("pass")
-        .select("id")
-        .gte("requested_at", monthStart.toISOString())
-        .lte("requested_at", monthEnd.toISOString()),
-    ]);
+    // Fetch pending passes (awaiting DSA approval)
+    const { data: pendingPasses, error: pendingError } = await supabase
+      .from("pass")
+      .select("id")
+      .eq("status", "pending")
+      .order("requested_at", { ascending: false });
 
-    // -----------------------------
-    // 5. Recent Requests With Student Details
-    // -----------------------------
+    if (pendingError) throw pendingError;
+
+    // Fetch DSA approved passes
+    const { data: dsaApprovedToday, error: dsaApprovedError } = await supabase
+      .from("pass")
+      .select("id")
+      .eq("status", "dsa_approved")
+      .gte("dsa_approved_at", today.toISOString())
+      .lt("dsa_approved_at", tomorrow.toISOString());
+
+    if (dsaApprovedError) throw dsaApprovedError;
+
+    // Fetch passes finally approved by CSO today (Status: cso_approved)
+    const { data: csoApprovedToday, error: csoApprovedError } = await supabase
+      .from("pass")
+      .select("id")
+      .eq("status", "cso_approved")
+      .gte("cso_approved_at", today.toISOString())
+      .lt("cso_approved_at", tomorrow.toISOString());
+
+    if (csoApprovedError) throw csoApprovedError;
+
+    // Fetch passes denied by CSO today
+    const { data: csoDeniedToday, error: csoDeniedError } = await supabase
+      .from("pass")
+      .select("id")
+      .eq("status", "rejected")
+      .eq("rejected_by_role", "CSO")
+      .gte("rejected_at", today.toISOString())
+      .lt("rejected_at", tomorrow.toISOString());
+
+    if (csoDeniedError) throw csoDeniedError;
+
+    // Fetch passes denied today
+    const { data: deniedToday, error: deniedError } = await supabase
+      .from("pass")
+      .select("id")
+      .eq("status", "rejected")
+      .eq("rejected_by_role", "DSA")
+      .gte("rejected_at", today.toISOString())
+      .lt("rejected_at", tomorrow.toISOString());
+
+    if (deniedError) throw deniedError;
+
+    // Fetch total requests this month
+    const { data: totalRequests, error: totalError } = await supabase
+      .from("pass")
+      .select("id")
+      .gte("requested_at", monthStart.toISOString())
+      .lte("requested_at", monthEnd.toISOString());
+
+    if (totalError) throw totalError;
+
+    // Fetch recent pending requests with student details
     const { data: recentRequests, error: recentError } = await supabase
       .from("pass")
       .select(
-        `id,
+        `
+        id,
         student_id,
         type,
         destination,
@@ -163,11 +170,11 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
         status,
         requested_at,
         student:student_id (
-    has_special_privilege,
           first_name,
           last_name,
           matric_no,
-          hostel:hostel_id!inner (
+          has_special_privilege,
+          hostel:hostel_id (
             name
           )
         )
@@ -179,33 +186,26 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
 
     if (recentError) throw recentError;
 
-    // -----------------------------
-    // 6. Transform Into Typed Model
-    // -----------------------------
-    const transformedRequests: PassRequest[] = (recentRequests ?? []).map(
-      (req) => ({
-        id: req.id,
-        student_id: req.student_id,
-        type: req.type,
-        destination: req.destination,
-        reason: req.reason,
-        status: req.status,
-        requested_at: req.requested_at,
-        student: {
-          has_special_privilege:
-            req.student?.[0]?.has_special_privilege ?? false,
+    // Transform the data from RawPassRequest to PassRequest
+    const transformedRequests: PassRequest[] = (
+      (recentRequests as unknown as RawPassRequest[]) || []
+    ).map((req) => ({
+      id: req.id,
+      student_id: req.student_id,
+      type: req.type,
+      destination: req.destination,
+      reason: req.reason,
+      status: req.status,
+      requested_at: req.requested_at,
+      student: {
+        has_special_privilege: req.student?.has_special_privilege || false,
+        first_name: req.student?.first_name || "",
+        last_name: req.student?.last_name || "",
+        matric_no: req.student?.matric_no || "",
+        hostel: req.student?.hostel || null,
+      },
+    }));
 
-          first_name: req.student?.[0]?.first_name ?? "",
-          last_name: req.student?.[0]?.last_name ?? "",
-          matric_no: req.student?.[0]?.matric_no ?? "",
-          hostel: req.student?.[0]?.hostel?.[0] ?? null,
-        },
-      })
-    );
-
-    // -----------------------------
-    // 7. Sorting Rules
-    // -----------------------------
     const urgentReasons = [
       "Medical Emergency",
       "Family Emergency",
@@ -213,13 +213,11 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
     ];
 
     const sortedRequests = transformedRequests.sort((a, b) => {
-      // Special privilege first
-      if (a.student.has_special_privilege && !b.student.has_special_privilege)
-        return -1;
-      if (!a.student.has_special_privilege && b.student.has_special_privilege)
-        return 1;
+      // 1. Special privilege
+      if (a.student.has_special_privilege && !b.student.has_special_privilege) return -1;
+      if (!a.student.has_special_privilege && b.student.has_special_privilege) return 1;
 
-      // Urgent reasons
+      // 2. Urgency
       const aUrgent = urgentReasons.some((r) =>
         a.reason.toLowerCase().includes(r.toLowerCase())
       );
@@ -230,31 +228,30 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
       if (aUrgent && !bUrgent) return -1;
       if (!aUrgent && bUrgent) return 1;
 
-      // Newest first
+      // 3. Newest first by requested_at
       return (
         new Date(b.requested_at).getTime() - new Date(a.requested_at).getTime()
       );
     });
 
-    // -----------------------------
-    // 8. Final Return Object
-    // -----------------------------
     return {
       stats: {
-        pendingApproval: pendingPasses?.length ?? 0,
-        dsaApprovedToday: dsaApprovedToday?.length ?? 0,
-        csoApprovedToday: csoApprovedToday?.length ?? 0,
-        csoDeniedToday: csoDeniedToday?.length ?? 0,
-        deniedToday: deniedToday?.length ?? 0,
-        totalRequests: totalRequests?.length ?? 0,
+        pendingApproval: pendingPasses?.length || 0,
+        dsaApprovedToday: dsaApprovedToday?.length || 0,
+        csoApprovedToday: csoApprovedToday?.length || 0,
+        csoDeniedToday: csoDeniedToday?.length || 0,
+        deniedToday: deniedToday?.length || 0,
+        totalRequests: totalRequests?.length || 0,
       },
       recentRequests: sortedRequests,
     };
   } catch (error: any) {
-    if (error instanceof Response || error?.status === 302) throw error;
+    // If it's a redirect, throw it
+    if (error?.status === 302 || error instanceof Response) {
+      throw error;
+    }
 
     console.error("Error loading DSA dashboard:", error);
-
     return {
       stats: {
         pendingApproval: 0,
@@ -368,7 +365,7 @@ export default function DSADashboard({ loaderData }: Route.ComponentProps) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Approved Today
+             DSA Approved Today
             </CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -382,6 +379,21 @@ export default function DSADashboard({ loaderData }: Route.ComponentProps) {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+             CSO Approved Today
+            </CardTitle>
+            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">
+              {stats.csoApprovedToday}
+            </div>
+            <p className="text-xs text-muted-foreground">Final Approval Made</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Denied Today</CardTitle>
             <XCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -390,6 +402,19 @@ export default function DSADashboard({ loaderData }: Route.ComponentProps) {
               {stats.deniedToday}
             </div>
             <p className="text-xs text-muted-foreground">Rejected by you</p>
+          </CardContent>
+
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Denied By CSO</CardTitle>
+            <XCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">
+              {stats.csoDeniedToday}
+            </div>
+            <p className="text-xs text-muted-foreground">Rejected by CSO</p>
           </CardContent>
         </Card>
 
@@ -440,9 +465,10 @@ export default function DSADashboard({ loaderData }: Route.ComponentProps) {
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-4 text-gray-900">
               {recentRequests.map((request) => {
                 const priority = getPriority(request);
+                console.log("This is the request.student: ", request);
                 const studentName = `${request.student.first_name} ${request.student.last_name}`;
                 const initials = studentName
                   .split(" ")
@@ -452,17 +478,17 @@ export default function DSADashboard({ loaderData }: Route.ComponentProps) {
                 return (
                   <div
                     key={request.id}
-                    className="flex flex-col lg:flex-row lg:items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors gap-4"
+                    className="flex flex-col lg:flex-row lg:items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors gap-4 text-gray-900"
                   >
                     <div className="flex items-center gap-4">
                       <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <span className="text-sm font-medium text-primary">
+                        <span className="text-sm font-medium text-gray-900">
                           {initials}
                         </span>
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-medium text-foreground">
+                          <p className="font-medium ">
                             {studentName}
                           </p>
                           <Badge variant="outline" className="text-xs">
@@ -474,7 +500,7 @@ export default function DSADashboard({ loaderData }: Route.ComponentProps) {
                             </Badge>
                           )}
                         </div>
-                        <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-muted-foreground mt-1">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-gray-900 mt-1">
                           <span>{request.student.hostel?.name || "N/A"}</span>
                           <span className="hidden sm:inline">•</span>
                           <span className="capitalize">
@@ -485,7 +511,7 @@ export default function DSADashboard({ loaderData }: Route.ComponentProps) {
                             {request.destination}
                           </span>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-xs text-gray-900 mt-1">
                           {formatTimeAgo(request.requested_at)}
                         </p>
                       </div>

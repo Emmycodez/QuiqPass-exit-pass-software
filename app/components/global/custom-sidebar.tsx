@@ -7,11 +7,13 @@ import { SidebarProvider } from "../ui/sidebar";
 interface CustomSidebarProps {
   children: React.ReactNode;
   gradientStyle: React.CSSProperties;
+  sidebarFooter?: React.ReactNode;
 }
 
 const CustomSidebar: React.FC<CustomSidebarProps> = ({
   children,
   gradientStyle,
+  sidebarFooter,
 }) => {
   const [isOpen, setIsOpen] = React.useState(false);
   const toggleSidebar = () => setIsOpen((prev) => !prev);
@@ -21,7 +23,7 @@ const CustomSidebar: React.FC<CustomSidebarProps> = ({
       {/* Desktop Sidebar - wrapped in its own SidebarProvider */}
       <SidebarProvider>
         <aside
-          className="hidden md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col z-10"
+          className="hidden md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col z-10 "
           style={gradientStyle}
         >
           <div className="p-4 flex justify-start items-center">
@@ -58,7 +60,7 @@ const CustomSidebar: React.FC<CustomSidebarProps> = ({
                   </Button>
                 </div>
                 <div className="flex flex-col flex-1 overflow-y-auto">
-                  {children}
+                  <div>{children}</div>
                 </div>
               </div>
             </div>
