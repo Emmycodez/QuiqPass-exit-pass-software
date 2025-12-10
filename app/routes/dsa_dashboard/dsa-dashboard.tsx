@@ -36,6 +36,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog";
+import Loader from "~/components/loader";
 
 // TODO: Confirm if pass limit tracking auto updates
 
@@ -380,7 +381,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
           dsa_comments: comments || null,
         })
         .eq("id", passId)
-        .eq("status", "dsa_approved");
+        .eq("status", "pending");
 
       if (approveError) {
         toast.error("System failed to approve pass request");
@@ -408,7 +409,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
           rejection_reason: comments || null,
         })
         .eq("id", passId)
-        .eq("status", "rejected");
+        .eq("status", "pending");
 
       if (denyError) {
         toast.error("System failed to deny pass request");
@@ -416,13 +417,15 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
         return { error: "Failed to deny pass request" };
       }
       toast.success("Pass denied Successfully");
-      return redirect("/dsa-dashboard")
+
       await supabase.from("audit_log").insert({
         user_id: user.id,
         action: "pass_rejected",
         entity_type: "pass",
         entity_id: passId,
       });
+
+      return redirect("/dsa-dashboard");
     }
   } catch (error) {
     toast.error("Error Processing Pass");
@@ -430,7 +433,11 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     return {
       error: "Failed to process pass request",
     };
-  } 
+  }
+}
+
+export function HydrateFallback() {
+  return <Loader />;
 }
 
 export default function DSADashboard({ loaderData }: Route.ComponentProps) {
