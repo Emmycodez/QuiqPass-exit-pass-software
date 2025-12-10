@@ -18,7 +18,7 @@ import { Outlet } from "react-router";
 import CustomSidebar from "~/components/global/custom-sidebar";
 import { SidebarFeedbackForm } from "~/components/global/sidebar-form";
 import { NavMain } from "~/components/nav-main";
-// TODO: Implement protected route logic
+// TODO: Implement feedback sending through sidebar feedback form
 
 // export async function clientLoader() {
 //   // -----------------------------
