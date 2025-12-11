@@ -7,6 +7,7 @@ import {
   Loader2,
   MapPin,
   Phone,
+  RefreshCcw,
   TrendingUp,
   User,
   X,
@@ -36,6 +37,7 @@ import {
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
 import type { Route } from "./+types/dsa-dashboard";
+import { useRevalidator } from "react-router";
 
 // TODO: Confirm if pass limit tracking auto updates
 
@@ -440,6 +442,8 @@ export function HydrateFallback() {
 }
 
 export default function DSADashboard({ loaderData }: Route.ComponentProps) {
+  const { revalidate, state } = useRevalidator();
+
   const { stats, recentRequests, error } = loaderData || {
     stats: {
       pendingApproval: 0,
@@ -564,12 +568,17 @@ export default function DSADashboard({ loaderData }: Route.ComponentProps) {
               Review and approve student exit pass requests
             </p>
           </div>
-          <Link to="/dsa-dashboard/pass-requests">
-            <Button className="gap-2 w-full sm:w-auto">
-              <FileText className="h-4 w-4" />
-              Review Requests
-            </Button>
-          </Link>
+
+          <Button
+            className="gap-2 w-full sm:w-auto"
+            onClick={() => revalidate()}
+            disabled={state === "loading"}
+          >
+            <RefreshCcw
+              className={`h-4 w-4 ${state === "loading" ? "animate-spin" : ""}`}
+            />
+            Refresh
+          </Button>
         </div>
 
         {/* Stats Cards */}

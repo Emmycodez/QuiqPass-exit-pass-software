@@ -64,11 +64,8 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
         { status: 400 }
       );
     }
-
-    if (authData.user) {
-      // Ensure session is fully loaded
-      await supabase.auth.refreshSession(); // Optional but ensures localStorage is updated
-      window.location.href = "/dsa-dashboard";
+    if (!authData.user) {
+      return data({ error: "Login failed." }, { status: 400 });
     }
 
     // Verify user is staff
@@ -94,6 +91,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       case "DSA":
         throw redirect("/dsa-dashboard");
       case "CSO":
+        throw redirect("/cso-dashboard");
       case "Assistant CSO":
         throw redirect("/cso-dashboard");
       case "porter":
