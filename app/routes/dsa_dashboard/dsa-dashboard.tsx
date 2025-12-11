@@ -57,6 +57,8 @@ export interface RawPassRequest {
   emergency_contact_phone_number: string;
   additional_notes: string | null;
   student: {
+    guardian_name: string;
+    guardian_phone_number: string;
     has_special_privilege: boolean;
     first_name: string;
     last_name: string;
@@ -85,6 +87,8 @@ interface PassRequest {
     first_name: string;
     last_name: string;
     matric_no: string;
+    guardian_name: string;
+    guardian_phone_number: string;
     hostel: {
       name: string;
     } | null;
@@ -235,6 +239,8 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
           first_name,
           last_name,
           matric_no,
+          guardian_name,
+          guardian_phone_number,
           has_special_privilege,
           hostel:hostel_id (
             name
@@ -271,6 +277,8 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
       emergency_contact_phone_number: req.emergency_contact_phone_number,
       additional_notes: req.additional_notes,
       student: {
+        guardian_name: req.student?.guardian_name || "",
+        guardian_phone_number: req.student?.guardian_phone_number || "",
         has_special_privilege: req.student?.has_special_privilege || false,
         first_name: req.student?.first_name || "",
         last_name: req.student?.last_name || "",
