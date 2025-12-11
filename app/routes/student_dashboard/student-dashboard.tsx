@@ -79,7 +79,7 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
 
   const totalPasses = passes ? passes.length : 0;
   const pendingCount = passes
-    ? passes.filter((pass) => pass.status === "pending").length
+    ? passes.filter((pass) => pass.status === "pending" || pass.status === "dsa_approved").length
     : 0;
   const approvedCount = passes
     ? passes.filter((pass) => pass.status === "approved").length
