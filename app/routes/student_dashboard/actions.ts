@@ -229,7 +229,7 @@ export const generatePassDocument = (pass: PassRequest, studentName: string) => 
   const statusColor = pass.status === 'approved' ? '#10b981' : '#3b82f6';
   
   // Get the absolute URL for the logo
-  const logoUrl = `${window.location.origin}/public/wellspring-logo.jpg`;
+  const logoUrl = `${window.location.origin}/wellspring-logo.jpg`;
   
   const htmlContent = `
     <!DOCTYPE html>
