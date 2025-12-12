@@ -8,6 +8,7 @@ import {
   Download,
   FileText,
   MapPin,
+  RefreshCcw,
   XCircle,
 } from "lucide-react";
 import { Suspense, useState } from "react";
@@ -41,6 +42,7 @@ import { Form } from "react-router";
 import { Separator } from "~/components/ui/separator";
 import type { PassRequest } from "types";
 import { formatDate, formatTime, generatePassDocument } from "./actions";
+import { useRevalidator } from "react-router";
 
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   const {
@@ -118,6 +120,7 @@ const StudentDashboard = ({
 }: {
   loaderData?: StudentLoaderData | null;
 }) => {
+    const { revalidate, state } = useRevalidator();
   const cards = getCards(
     loaderData?.stats ?? { total: 0, pending: 0, approved: 0, denied: 0 }
   );
@@ -142,6 +145,17 @@ const StudentDashboard = ({
           buttonText="Apply for Pass"
           buttonLink="/student-dashboard/apply-for-pass"
         />
+
+        <Button
+          className="gap-2 w-full sm:w-auto"
+          onClick={() => revalidate()}
+          disabled={state === "loading"}
+        >
+          <RefreshCcw
+            className={`h-4 w-4 ${state === "loading" ? "animate-spin" : ""}`}
+          />
+          Refresh
+        </Button>
 
         {/* Stats Cards */}
         <div className="grid gap-4 md:grid-cols-3">
