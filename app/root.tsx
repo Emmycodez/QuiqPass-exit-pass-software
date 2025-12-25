@@ -13,6 +13,10 @@ import type { Route } from "./+types/root";
 import stylesheet from "./app.css?url";
 import Loader from "./components/loader";
 
+// TODO: Implement proper meta tags, favicon for SEO and social media sharing
+
+// TODO: local font hosting
+
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {

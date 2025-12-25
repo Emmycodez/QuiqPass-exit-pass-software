@@ -14,9 +14,10 @@ import {
   IconUsers,
 } from "@tabler/icons-react";
 import { useState } from "react";
-import { Outlet } from "react-router";
+import { Outlet, useNavigation } from "react-router";
 import CustomSidebar from "~/components/global/custom-sidebar";
 import { SidebarFeedbackForm } from "~/components/global/sidebar-form";
+import Loader from "~/components/loader";
 import { NavMain } from "~/components/nav-main";
 // TODO: Implement feedback sending through sidebar feedback form
 
@@ -80,6 +81,7 @@ const DsaDashboardLayout = () => {
     role: "",
   });
   const [unreadCount, setUnreadCount] = useState(0);
+  const navigation = useNavigation();
 
   // useEffect(() => {
   //   const fetchData = async () => {
@@ -243,6 +245,11 @@ const DsaDashboardLayout = () => {
       },
     ],
   };
+  const isNavigating = Boolean(navigation.location);
+
+  if (isNavigating) {
+    return isNavigating && <Loader />;
+  }
 
   return (
     <div className="min-h-screen relative" suppressHydrationWarning>
@@ -257,11 +264,9 @@ const DsaDashboardLayout = () => {
 
       {/* Sidebar and content */}
       <div className="relative z-10">
-        <CustomSidebar
-          gradientStyle={gradientStyle}
-        >
+        <CustomSidebar gradientStyle={gradientStyle}>
           <NavMain items={data.navMain} />
-          <SidebarFeedbackForm route="DSA"/>
+          <SidebarFeedbackForm route="DSA" />
           {/* <NavUser user={data.user} /> */}
         </CustomSidebar>
 

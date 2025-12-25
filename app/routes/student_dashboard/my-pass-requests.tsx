@@ -446,7 +446,7 @@ export default function RequestsPage({ loaderData }: Route.ComponentProps) {
               <div className="space-y-4">
                 <h3 className="font-semibold flex items-center gap-2">
                   <MapPin className="h-4 w-4" />
-                  Travel Details
+                  Pass Details
                 </h3>
                 <div className="space-y-3">
                   <div>
