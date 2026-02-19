@@ -20,18 +20,21 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import {
-  TrendingUp,
-  TrendingDown,
-  Calendar,
-  CheckCircle,
-} from "lucide-react";
+import { TrendingUp, TrendingDown, Calendar, CheckCircle } from "lucide-react";
 import { redirect } from "react-router";
 import { supabase } from "supabase/supabase-client";
 import toast from "react-hot-toast";
 import Loader from "~/components/loader";
 import { DashboardHeaders } from "~/components/dashboard";
 import type { Route } from "./+types/analytics";
+import { useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
 
 // Client Loader - Fetch analytics data
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
@@ -52,7 +55,7 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
       .eq("id", user.id)
       .single();
 
-    if (staffError || !staff || staff.role !== "CSO") {
+    if (staffError || !staff || staff.role !== "DSA") {
       toast.error("Unauthorized access");
       throw redirect("/dashboard");
     }
@@ -128,33 +131,36 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
       .from("pass")
       .select(
         `
+    id,
+    student:student_id (
+      hostel:hostel_id (
         id,
-        student:student_id (
-          hostel:hostel_id (
-            id,
-            name
-          )
-        )
-      `
+        name,
+        gender
+      )
+    )
+  `
       )
       .gte("requested_at", startOfSixMonths.toISOString());
+
+    console.log("Hostel Requests Data:", hostelRequests);
 
     // Calculate approval rate
     const approvalRate =
       totalRequests && totalRequests > 0
-        ? Math.round((approvedCount || 0) / totalRequests * 100)
+        ? Math.round(((approvedCount || 0) / totalRequests) * 100)
         : 0;
 
     const lastMonthApprovalRate =
       lastMonthTotal && lastMonthTotal > 0
-        ? Math.round((lastMonthApproved || 0) / lastMonthTotal * 100)
+        ? Math.round(((lastMonthApproved || 0) / lastMonthTotal) * 100)
         : 0;
 
     // Calculate percentage changes
     const requestsChange =
       lastMonthTotal && lastMonthTotal > 0
         ? Math.round(
-            ((totalRequests || 0) - lastMonthTotal) / lastMonthTotal * 100
+            (((totalRequests || 0) - lastMonthTotal) / lastMonthTotal) * 100
           )
         : 0;
 
@@ -258,8 +264,23 @@ function processWeeklyData(passes: any[]) {
 
 // Helper function to process monthly data
 function processMonthlyData(passes: any[]) {
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  const monthData: { [key: string]: { month: string; short: number; long: number } } = {};
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+  const monthData: {
+    [key: string]: { month: string; short: number; long: number };
+  } = {};
 
   passes.forEach((pass) => {
     const passDate = new Date(pass.requested_at);
@@ -290,19 +311,33 @@ function processPassTypeData(passes: any[]) {
 
 // Helper function to process hostel data
 function processHostelData(passes: any[]) {
-  const hostelCounts: { [key: string]: number } = {};
+  const hostelMap: {
+    [key: string]: {
+      hostel: string;
+      requests: number;
+      gender: string;
+    };
+  } = {};
 
   passes.forEach((pass) => {
     const hostelName = pass.student?.hostel?.name;
-    if (hostelName) {
-      hostelCounts[hostelName] = (hostelCounts[hostelName] || 0) + 1;
+    const hostelGender = pass.student?.hostel?.gender;
+
+    if (hostelName && hostelGender) {
+      if (!hostelMap[hostelName]) {
+        hostelMap[hostelName] = {
+          hostel: hostelName,
+          requests: 0,
+          gender: hostelGender,
+        };
+      }
+      hostelMap[hostelName].requests++;
     }
   });
 
-  return Object.entries(hostelCounts)
-    .map(([hostel, requests]) => ({ hostel, requests }))
+  return Object.values(hostelMap)
     .sort((a, b) => b.requests - a.requests)
-    .slice(0, 6);
+    .slice(0, 8);
 }
 
 export function HydrateFallback() {
@@ -312,6 +347,11 @@ export function HydrateFallback() {
 export default function AnalyticsPage({ loaderData }: Route.ComponentProps) {
   const { metrics, weeklyData, monthlyData, passTypeData, hostelData, error } =
     loaderData;
+  const [hostelFilter, setHostelFilter] = useState("all");
+  const filteredHostelData =
+    hostelFilter === "all"
+      ? hostelData
+      : hostelData.filter((h) => h.gender === hostelFilter);
 
   if (error) {
     return (
@@ -340,11 +380,15 @@ export default function AnalyticsPage({ loaderData }: Route.ComponentProps) {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Requests</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">
+              Total Requests
+            </CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground " />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{metrics.totalRequests}</div>
+            <div className="text-2xl font-bold text-blue-950">
+              {metrics.totalRequests}
+            </div>
             <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
               {metrics.requestsChange >= 0 ? (
                 <>
@@ -356,7 +400,9 @@ export default function AnalyticsPage({ loaderData }: Route.ComponentProps) {
               ) : (
                 <>
                   <TrendingDown className="h-3 w-3 text-red-500" />
-                  <span className="text-red-500">{metrics.requestsChange}%</span>
+                  <span className="text-red-500">
+                    {metrics.requestsChange}%
+                  </span>
                 </>
               )}{" "}
               from last month
@@ -370,7 +416,9 @@ export default function AnalyticsPage({ loaderData }: Route.ComponentProps) {
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{metrics.approvalRate}%</div>
+            <div className="text-2xl font-bold text-blue-950">
+              {metrics.approvalRate}%
+            </div>
             <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
               {metrics.approvalRateChange >= 0 ? (
                 <>
@@ -400,7 +448,9 @@ export default function AnalyticsPage({ loaderData }: Route.ComponentProps) {
             <TrendingDown className="h-4 w-4 text-emerald-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{metrics.avgProcessingTime}h</div>
+            <div className="text-2xl font-bold text-blue-950">
+              {metrics.avgProcessingTime}h
+            </div>
             <p className="text-xs text-muted-foreground mt-1">
               DSA to CSO approval
             </p>
@@ -415,8 +465,12 @@ export default function AnalyticsPage({ loaderData }: Route.ComponentProps) {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{metrics.activeRequests}</div>
-            <p className="text-xs text-muted-foreground mt-1">Awaiting action</p>
+            <div className="text-2xl font-bold text-blue-950">
+              {metrics.activeRequests}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Awaiting action
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -438,9 +492,21 @@ export default function AnalyticsPage({ loaderData }: Route.ComponentProps) {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="approved" fill="hsl(142, 76%, 36%)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="denied" fill="hsl(0, 84%, 60%)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="pending" fill="hsl(48, 96%, 53%)" radius={[4, 4, 0, 0]} />
+                <Bar
+                  dataKey="approved"
+                  fill="hsl(142, 76%, 36%)"
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar
+                  dataKey="denied"
+                  fill="hsl(0, 84%, 60%)"
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar
+                  dataKey="pending"
+                  fill="hsl(48, 96%, 53%)"
+                  radius={[4, 4, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -449,7 +515,9 @@ export default function AnalyticsPage({ loaderData }: Route.ComponentProps) {
         <Card>
           <CardHeader>
             <CardTitle>Pass Type Distribution</CardTitle>
-            <CardDescription>Short vs Long passes this semester</CardDescription>
+            <CardDescription>
+              Short vs Long passes this semester
+            </CardDescription>
           </CardHeader>
           <CardContent className="flex items-center justify-center">
             <ResponsiveContainer width="100%" height={300}>
@@ -477,7 +545,9 @@ export default function AnalyticsPage({ loaderData }: Route.ComponentProps) {
         <Card>
           <CardHeader>
             <CardTitle>Monthly Trends</CardTitle>
-            <CardDescription>Pass requests over the last 6 months</CardDescription>
+            <CardDescription>
+              Pass requests over the last 6 months
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -507,26 +577,62 @@ export default function AnalyticsPage({ loaderData }: Route.ComponentProps) {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Requests by Hostel</CardTitle>
-            <CardDescription>
-              Total requests per hostel this semester
-            </CardDescription>
+          <CardHeader className="flex flex-row items-start justify-between space-y-0">
+            <div>
+              <CardTitle>Requests by Hostel</CardTitle>
+              <CardDescription>
+                Total requests per hostel this semester
+              </CardDescription>
+            </div>
+            <div className="w-[140px]">
+              <Select value={hostelFilter} onValueChange={setHostelFilter}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Hostels</SelectItem>
+                  <SelectItem value="male">Male Hostels</SelectItem>
+                  <SelectItem value="female">Female Hostels</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </CardHeader>
+
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={hostelData} layout="horizontal">
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis dataKey="hostel" type="category" width={100} />
-                <Tooltip />
-                <Bar
-                  dataKey="requests"
-                  fill="hsl(142, 76%, 36%)"
-                  radius={[0, 4, 4, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={filteredHostelData} // Changed from hostelData
+                  layout="vertical"
+                  margin={{ top: 8, right: 16, bottom: 8, left: 8 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+
+                  <XAxis type="number" tick={{ fontSize: 12 }} />
+
+                  <YAxis
+                    type="category"
+                    dataKey="hostel"
+                    width={90}
+                    tick={{ fontSize: 12 }}
+                  />
+
+                  <Tooltip
+                    cursor={{ fill: "transparent" }}
+                    contentStyle={{
+                      borderRadius: "6px",
+                      fontSize: "12px",
+                    }}
+                  />
+
+                  <Bar
+                    dataKey="requests"
+                    fill="hsl(142, 76%, 36%)"
+                    radius={[0, 4, 4, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
       </div>

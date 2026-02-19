@@ -20,8 +20,6 @@ import { SidebarFeedbackForm } from "~/components/global/sidebar-form";
 import { NavMain } from "~/components/nav-main";
 // TODO: Implement feedback sending through sidebar feedback form
 
-
-
 const CSODashboardLayout = () => {
   const [profile, setProfile] = useState({
     first_name: "",
@@ -31,7 +29,6 @@ const CSODashboardLayout = () => {
     role: "",
   });
   const [unreadCount, setUnreadCount] = useState(0);
-
 
   const gradientStyle = {
     background: "radial-gradient(125% 125% at 50% 10%,#ffffff 40%,#a78bfa 100%",
@@ -169,11 +166,9 @@ const CSODashboardLayout = () => {
 
       {/* Sidebar and content */}
       <div className="relative z-10">
-        <CustomSidebar
-          gradientStyle={gradientStyle}
-        >
+        <CustomSidebar gradientStyle={gradientStyle}>
           <NavMain items={data.navMain} />
-          <SidebarFeedbackForm route="CS0"/>
+          <SidebarFeedbackForm route="CS0" />
           {/* <NavUser user={data.user} /> */}
         </CustomSidebar>
 
