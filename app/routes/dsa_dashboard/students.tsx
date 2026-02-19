@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { redirect } from "react-router";
 import { supabase } from "supabase/supabase-client";
 import toast from "react-hot-toast";
@@ -30,7 +30,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog";
-import { Search, Eye, Mail, Phone, MapPin } from "lucide-react";
+import { Search, Eye, Mail, Phone, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -182,10 +182,14 @@ export default function CSOStudentsPage({ loaderData }: Route.ComponentProps) {
   const { students, error } = loaderData;
   const [searchTerm, setSearchTerm] = useState("");
   const [hostelFilter, setHostelFilter] = useState("all");
+  const [genderFilter, setGenderFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
   const [selectedStudent, setSelectedStudent] = useState<StudentRow | null>(
     null
   );
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+
+  const itemsPerPage = 10;
 
   if (error) {
     return (
@@ -203,17 +207,34 @@ export default function CSOStudentsPage({ loaderData }: Route.ComponentProps) {
     );
   }
 
-  const filteredStudents = students.filter((student) => {
-    const fullName = `${student.first_name ?? ""} ${student.last_name ?? ""}`.toLowerCase();
-    const matchesSearch =
-      fullName.includes(searchTerm.toLowerCase()) ||
-      (student.matric_no ?? "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const hostelName = getHostelName(student.hostel);
-    const matchesHostel =
-      hostelFilter === "all" || hostelName === hostelFilter;
-    return matchesSearch && matchesHostel;
-  });
+  const getStudentGender = (hostel: StudentRow["hostel"]): string | null => {
+    if (!hostel) return null;
+    if (Array.isArray(hostel)) return hostel[0]?.gender ?? null;
+    return hostel.gender;
+  };
+
+  const filteredStudents = useMemo(() => {
+    return students.filter((student) => {
+      const fullName = `${student.first_name ?? ""} ${student.last_name ?? ""}`.toLowerCase();
+      const matchesSearch =
+        fullName.includes(searchTerm.toLowerCase()) ||
+        (student.matric_no ?? "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        student.email.toLowerCase().includes(searchTerm.toLowerCase());
+      const hostelName = getHostelName(student.hostel);
+      const matchesHostel =
+        hostelFilter === "all" || hostelName === hostelFilter;
+      const studentGender = getStudentGender(student.hostel);
+      const matchesGender =
+        genderFilter === "all" || studentGender === genderFilter;
+      return matchesSearch && matchesHostel && matchesGender;
+    });
+  }, [students, searchTerm, hostelFilter, genderFilter]);
+
+  const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
+  const paginatedStudents = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredStudents.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredStudents, currentPage]);
 
   const handleViewDetails = (student: StudentRow) => {
     setSelectedStudent(student);
@@ -241,6 +262,8 @@ export default function CSOStudentsPage({ loaderData }: Route.ComponentProps) {
           <CardDescription>
             {filteredStudents.length}{" "}
             {filteredStudents.length === 1 ? "student" : "students"} found
+            {filteredStudents.length > 0 &&
+              ` • Showing ${(currentPage - 1) * itemsPerPage + 1}-${Math.min(currentPage * itemsPerPage, filteredStudents.length)}`}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -255,13 +278,19 @@ export default function CSOStudentsPage({ loaderData }: Route.ComponentProps) {
                   id="search"
                   placeholder="Search by name, ID, or email..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setCurrentPage(1);
+                  }}
                   className="pl-9"
                 />
               </div>
             </div>
             <div className="w-48">
-              <Select value={hostelFilter} onValueChange={setHostelFilter}>
+              <Select value={hostelFilter} onValueChange={(value) => {
+                setHostelFilter(value);
+                setCurrentPage(1);
+              }}>
                 <SelectTrigger>
                   <SelectValue placeholder="Filter by hostel" />
                 </SelectTrigger>
@@ -275,6 +304,21 @@ export default function CSOStudentsPage({ loaderData }: Route.ComponentProps) {
                 </SelectContent>
               </Select>
             </div>
+            <div className="w-40">
+              <Select value={genderFilter} onValueChange={(value) => {
+                setGenderFilter(value);
+                setCurrentPage(1);
+              }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Filter by gender" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Genders</SelectItem>
+                  <SelectItem value="male">Male</SelectItem>
+                  <SelectItem value="female">Female</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="rounded-md border">
@@ -283,6 +327,7 @@ export default function CSOStudentsPage({ loaderData }: Route.ComponentProps) {
                 <TableRow>
                   <TableHead>Student ID</TableHead>
                   <TableHead>Name</TableHead>
+                  <TableHead>Gender</TableHead>
                   <TableHead>Hostel</TableHead>
                   <TableHead>Room</TableHead>
                   <TableHead className="text-right">Total Passes</TableHead>
@@ -291,17 +336,17 @@ export default function CSOStudentsPage({ loaderData }: Route.ComponentProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredStudents.length === 0 ? (
+                {paginatedStudents.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
+                      colSpan={8}
                       className="text-center text-muted-foreground"
                     >
-                      No students found
+                      {filteredStudents.length === 0 ? "No students found" : "No students on this page"}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredStudents.map((student) => (
+                  paginatedStudents.map((student) => (
                     <TableRow key={student.id}>
                       <TableCell className="font-medium">
                         {student.matric_no ?? student.id}
@@ -315,6 +360,9 @@ export default function CSOStudentsPage({ loaderData }: Route.ComponentProps) {
                             {student.email}
                           </p>
                         </div>
+                      </TableCell>
+                      <TableCell className="capitalize">
+                        {getStudentGender(student.hostel) ?? "N/A"}
                       </TableCell>
                       <TableCell>{getHostelName(student.hostel)}</TableCell>
                       <TableCell>{student.room_number}</TableCell>
@@ -345,6 +393,35 @@ export default function CSOStudentsPage({ loaderData }: Route.ComponentProps) {
               </TableBody>
             </Table>
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                Page {currentPage} of {totalPages}
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
