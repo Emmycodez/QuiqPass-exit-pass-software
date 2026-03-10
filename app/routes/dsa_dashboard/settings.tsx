@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "~/components/ui/button";
 import {
   Card,
@@ -12,102 +12,232 @@ import { Label } from "~/components/ui/label";
 import { Separator } from "~/components/ui/separator";
 import { Switch } from "~/components/ui/switch";
 import { Textarea } from "~/components/ui/textarea";
-import { Bell, Save, User } from "lucide-react";
-import { useAuth } from "~/contexts/auth-context";
+import { Bell, Save, User, Loader2 } from "lucide-react";
+import { redirect, Form, useNavigation } from "react-router";
+import { supabase } from "supabase/supabase-client";
+import toast from "react-hot-toast";
+import Loader from "~/components/loader";
+import { DashboardHeaders } from "~/components/dashboard";
+import type { Route } from "./+types/settings";
 
-export default function CSOSettingsPage() {
-  const { user } = useAuth();
+type StaffProfile = {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  email: string;
+  role: string;
+};
+
+export async function clientLoader({ request }: Route.ClientLoaderArgs) {
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) throw redirect("/login");
+
+    const { data: staff, error: staffError } = await supabase
+      .from("staff")
+      .select("id, first_name, last_name, email, role")
+      .eq("id", user.id)
+      .single();
+
+    if (staffError || !staff || staff.role !== "DSA") {
+      toast.error("Unauthorized access");
+      throw redirect("/login");
+    }
+
+    return { staff, error: null };
+  } catch (error) {
+    console.error("Settings loader error:", error);
+    return { staff: null, error: "Failed to load profile data" };
+  }
+}
+
+export async function clientAction({ request }: Route.ClientActionArgs) {
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) return { error: true, message: "Not authenticated" };
+
+    const formData = await request.formData();
+    const first_name = formData.get("firstName")?.toString().trim() ?? "";
+    const last_name  = formData.get("lastName")?.toString().trim()  ?? "";
+
+    const { error: updateError } = await supabase
+      .from("staff")
+      .update({ first_name, last_name })
+      .eq("id", user.id);
+
+    if (updateError) {
+      toast.error("Failed to save profile.");
+      return { error: true, message: "Failed to update profile." };
+    }
+
+    toast.success("Profile updated successfully!");
+    return { error: false, message: "Profile updated." };
+  } catch {
+    toast.error("An unexpected error occurred.");
+    return { error: true, message: "Unexpected error" };
+  }
+}
+
+export function HydrateFallback() {
+  return <Loader />;
+}
+
+export default function DSASettingsPage({ loaderData, actionData }: Route.ComponentProps) {
+  const { staff, error } = loaderData;
+  const navigation = useNavigation();
+  const isSubmitting = navigation.state === "submitting";
+
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(true);
-  const [autoForwardNotifications, setAutoForwardNotifications] =
-    useState(false);
+  const [autoForwardNotifications, setAutoForwardNotifications] = useState(false);
   const [approvalNotifications, setApprovalNotifications] = useState(true);
-
-  const [name, setName] = useState(user?.name || "Dr. Johnson");
-  const [email, setEmail] = useState(user?.email || "cso@university.edu");
-  const [phone, setPhone] = useState("+233 24 999 8888");
-  const [office, setOffice] = useState("CSO Office, Main Administration");
   const [autoApprovalMessage, setAutoApprovalMessage] = useState(
     "Your pass request has been approved. Please ensure you follow all university exit protocols.",
   );
   const [autoDenialMessage, setAutoDenialMessage] = useState(
-    "Your pass request has been denied. Please contact the CSO office for more information.",
+    "Your pass request has been denied. Please contact the DSA office for more information.",
   );
 
-  const handleSaveProfile = () => {
-    console.log("Profile saved");
-  };
+  // Seed profile from DB
+  useEffect(() => {
+    if (staff) {
+      setFirstName(staff.first_name ?? "");
+      setLastName(staff.last_name ?? "");
+    }
+  }, [staff]);
+
+  // Restore notification prefs from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("dsa_notification_prefs");
+    if (saved) {
+      const prefs = JSON.parse(saved);
+      setEmailNotifications(prefs.emailNotifications ?? true);
+      setPushNotifications(prefs.pushNotifications ?? true);
+      setAutoForwardNotifications(prefs.autoForwardNotifications ?? false);
+      setApprovalNotifications(prefs.approvalNotifications ?? true);
+    }
+  }, []);
+
+  // Restore messages from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("dsa_auto_messages");
+    if (saved) {
+      const msgs = JSON.parse(saved);
+      if (msgs.approval) setAutoApprovalMessage(msgs.approval);
+      if (msgs.denial) setAutoDenialMessage(msgs.denial);
+    }
+  }, []);
 
   const handleSaveNotifications = () => {
-    console.log("Notification settings saved");
+    localStorage.setItem("dsa_notification_prefs", JSON.stringify({
+      emailNotifications,
+      pushNotifications,
+      autoForwardNotifications,
+      approvalNotifications,
+    }));
+    toast.success("Notification preferences saved.");
   };
 
   const handleSaveMessages = () => {
-    console.log("Auto-messages saved");
+    localStorage.setItem("dsa_auto_messages", JSON.stringify({
+      approval: autoApprovalMessage,
+      denial: autoDenialMessage,
+    }));
+    toast.success("Auto-response messages saved.");
   };
+
+  if (error || !staff) {
+    return (
+      <div className="space-y-6">
+        <DashboardHeaders
+          mainText="Settings"
+          subText="Configure your DSA dashboard preferences"
+        />
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="pt-6">
+            <p className="text-red-600">{error ?? "Could not load profile."}</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Settings</h1>
-        <p className="text-muted-foreground">
-          Configure CSO dashboard preferences
-        </p>
-      </div>
+      <DashboardHeaders
+        mainText="Settings"
+        subText="Configure your DSA dashboard preferences"
+      />
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            <CardTitle>Profile Settings</CardTitle>
-          </div>
-          <CardDescription>Update your personal information</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
+      <Form method="POST" className="space-y-6">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              <CardTitle>Profile Settings</CardTitle>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
+            <CardDescription>Update your personal information</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name</Label>
+                <Input
+                  id="firstName"
+                  name="firstName"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input
+                  id="lastName"
+                  name="lastName"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={staff.email}
+                  disabled
+                  className="bg-muted"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="role">Role</Label>
+                <Input
+                  id="role"
+                  value={staff.role}
+                  disabled
+                  className="bg-muted"
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
-              <Input
-                id="phone"
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-              />
+            <div className="flex justify-end">
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Profile
+                  </>
+                )}
+              </Button>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="office">Office Location</Label>
-              <Input
-                id="office"
-                value={office}
-                onChange={(e) => setOffice(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="flex justify-end">
-            <Button onClick={handleSaveProfile}>
-              <Save className="h-4 w-4 mr-2" />
-              Save Profile
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </Form>
 
       <Card>
         <CardHeader>
@@ -154,7 +284,7 @@ export default function CSOSettingsPage() {
                 New Forwarded Requests
               </Label>
               <p className="text-sm text-muted-foreground">
-                Get notified when porters forward new requests
+                Get notified when DSA forwards new requests
               </p>
             </div>
             <Switch
