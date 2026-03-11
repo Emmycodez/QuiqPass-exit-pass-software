@@ -51,6 +51,8 @@ export default [
       "routes/cso_dashboard/pass-requests.tsx"
     ),
     route("/cso-dashboard/analytics", "routes/cso_dashboard/analytics.tsx"),
+    route("/cso-dashboard/students", "routes/cso_dashboard/students.tsx"),
+    route("/cso-dashboard/notifications", "routes/cso_dashboard/notifications.tsx"),
   ]),
   route("/test", "dashboard/page.tsx"),
   route("dashboard", "routes/auth/dashboard.tsx"),
