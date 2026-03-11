@@ -156,11 +156,6 @@ const DsaDashboardLayout = () => {
         url: "/dsa-dashboard/students",
         icon: IconUsers,
       },
-      {
-        title: "Settings",
-        url: "/dsa-dashboard/settings",
-        icon: IconSettings,
-      },
     ],
     navClouds: [
       {

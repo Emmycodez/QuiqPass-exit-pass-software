@@ -43,7 +43,6 @@ export default [
       "routes/dsa_dashboard/pass-requests.tsx",
     ),
     route("/dsa-dashboard/students", "routes/dsa_dashboard/students.tsx"),
-    route("/dsa-dashboard/settings", "routes/dsa_dashboard/settings.tsx"),
   ]),
   layout("routes/cso_dashboard/layout.tsx", [
     route("cso-dashboard", "routes/cso_dashboard/cso-dashboard.tsx"),
