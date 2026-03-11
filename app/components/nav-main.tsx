@@ -28,6 +28,11 @@ export function NavMain({
     route?: string;
   }[];
 }) {
+  const notificationsItem = items.find((item) =>
+    item.url.includes("/notifications")
+  );
+  const unreadCount = notificationsItem?.unread ?? 0;
+
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
@@ -73,14 +78,21 @@ export function NavMain({
                 </Link>
               </SidebarMenuButton>
             )}
-            <Button
-              size="icon"
-              className="h-9 w-9 shrink-0 group-data-[collapsible=icon]:opacity-0"
-              variant="outline"
-            >
-              <MailIcon />
-              <span className="sr-only">Inbox</span>
-            </Button>
+            <Link to={notificationsItem?.url ?? "#"}>
+              <Button
+                size="icon"
+                className="h-9 w-9 shrink-0 group-data-[collapsible=icon]:opacity-0 relative"
+                variant="outline"
+              >
+                <MailIcon />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-white text-[9px] font-bold">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                )}
+                <span className="sr-only">Notifications</span>
+              </Button>
+            </Link>
           </SidebarMenuItem>
         </SidebarMenu>
         <SidebarMenu>

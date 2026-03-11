@@ -3,6 +3,7 @@ import { PanelLeft, X } from "lucide-react"; // Example icons
 import { Button } from "../ui/button"; // Re-use your Button component
 import Logo from "./logo";
 import { SidebarProvider } from "../ui/sidebar";
+import { useLocation } from "react-router";
 
 interface CustomSidebarProps {
   children: React.ReactNode;
@@ -16,6 +17,12 @@ const CustomSidebar: React.FC<CustomSidebarProps> = ({
 }) => {
   const [isOpen, setIsOpen] = React.useState(false);
   const toggleSidebar = () => setIsOpen((prev) => !prev);
+  const { pathname } = useLocation();
+
+  // Close mobile sidebar whenever the route changes
+  React.useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
 
   return (
     <>
