@@ -1,0 +1,549 @@
+{
+  "buildManifest": {
+    "serverBundles": {
+      "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0": {
+        "id": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+        "file": "build/server/nodejs_eyJydW50aW1lIjoibm9kZWpzIn0/index.js",
+        "config": {
+          "runtime": "nodejs"
+        }
+      }
+    },
+    "routeIdToServerBundleId": {
+      "root": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/home/home": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/auth/login": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/auth/staff-login": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/auth/register": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/auth/callback": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/auth/onboarding": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/student_dashboard/student-dashboard": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/student_dashboard/apply-for-pass": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/student_dashboard/my-pass-requests": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/student_dashboard/profile": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/student_dashboard/notifications": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/dsa_dashboard/dsa-dashboard": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/dsa_dashboard/analytics": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/dsa_dashboard/pass-requests": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/dsa_dashboard/students": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/dsa_dashboard/notifications": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/cso_dashboard/cso-dashboard": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/cso_dashboard/pass-requests": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/cso_dashboard/analytics": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/cso_dashboard/students": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/cso_dashboard/notifications": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "dashboard/page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/auth/dashboard": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0"
+    },
+    "routes": {
+      "root": {
+        "id": "root",
+        "file": "app/root.tsx",
+        "path": "",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/home/layout": {
+        "id": "routes/home/layout",
+        "parentId": "root",
+        "file": "app/routes/home/layout.tsx",
+        "config": {}
+      },
+      "routes/home/home": {
+        "id": "routes/home/home",
+        "parentId": "routes/home/layout",
+        "file": "app/routes/home/home.tsx",
+        "index": true,
+        "config": {}
+      },
+      "routes/auth/login": {
+        "id": "routes/auth/login",
+        "parentId": "root",
+        "file": "app/routes/auth/login.tsx",
+        "path": "login",
+        "config": {}
+      },
+      "routes/auth/staff-login": {
+        "id": "routes/auth/staff-login",
+        "parentId": "root",
+        "file": "app/routes/auth/staff-login.tsx",
+        "path": "staff-login",
+        "config": {}
+      },
+      "routes/auth/register": {
+        "id": "routes/auth/register",
+        "parentId": "root",
+        "file": "app/routes/auth/register.tsx",
+        "path": "register",
+        "config": {}
+      },
+      "routes/auth/callback": {
+        "id": "routes/auth/callback",
+        "parentId": "root",
+        "file": "app/routes/auth/callback.tsx",
+        "path": "auth/callback",
+        "config": {}
+      },
+      "routes/auth/onboarding": {
+        "id": "routes/auth/onboarding",
+        "parentId": "root",
+        "file": "app/routes/auth/onboarding.tsx",
+        "path": "onboarding",
+        "config": {}
+      },
+      "routes/student_dashboard/layout": {
+        "id": "routes/student_dashboard/layout",
+        "parentId": "root",
+        "file": "app/routes/student_dashboard/layout.tsx",
+        "config": {}
+      },
+      "routes/student_dashboard/student-dashboard": {
+        "id": "routes/student_dashboard/student-dashboard",
+        "parentId": "routes/student_dashboard/layout",
+        "file": "app/routes/student_dashboard/student-dashboard.tsx",
+        "path": "/student-dashboard",
+        "config": {}
+      },
+      "routes/student_dashboard/apply-for-pass": {
+        "id": "routes/student_dashboard/apply-for-pass",
+        "parentId": "routes/student_dashboard/layout",
+        "file": "app/routes/student_dashboard/apply-for-pass.tsx",
+        "path": "/student-dashboard/apply-for-pass",
+        "config": {}
+      },
+      "routes/student_dashboard/my-pass-requests": {
+        "id": "routes/student_dashboard/my-pass-requests",
+        "parentId": "routes/student_dashboard/layout",
+        "file": "app/routes/student_dashboard/my-pass-requests.tsx",
+        "path": "/student-dashboard/my-pass-requests",
+        "config": {}
+      },
+      "routes/student_dashboard/profile": {
+        "id": "routes/student_dashboard/profile",
+        "parentId": "routes/student_dashboard/layout",
+        "file": "app/routes/student_dashboard/profile.tsx",
+        "path": "/student-dashboard/my-profile",
+        "config": {}
+      },
+      "routes/student_dashboard/notifications": {
+        "id": "routes/student_dashboard/notifications",
+        "parentId": "routes/student_dashboard/layout",
+        "file": "app/routes/student_dashboard/notifications.tsx",
+        "path": "/student-dashboard/notifications",
+        "config": {}
+      },
+      "routes/dsa_dashboard/layout": {
+        "id": "routes/dsa_dashboard/layout",
+        "parentId": "root",
+        "file": "app/routes/dsa_dashboard/layout.tsx",
+        "config": {}
+      },
+      "routes/dsa_dashboard/dsa-dashboard": {
+        "id": "routes/dsa_dashboard/dsa-dashboard",
+        "parentId": "routes/dsa_dashboard/layout",
+        "file": "app/routes/dsa_dashboard/dsa-dashboard.tsx",
+        "path": "/dsa-dashboard",
+        "config": {}
+      },
+      "routes/dsa_dashboard/analytics": {
+        "id": "routes/dsa_dashboard/analytics",
+        "parentId": "routes/dsa_dashboard/layout",
+        "file": "app/routes/dsa_dashboard/analytics.tsx",
+        "path": "/dsa-dashboard/analytics",
+        "config": {}
+      },
+      "routes/dsa_dashboard/pass-requests": {
+        "id": "routes/dsa_dashboard/pass-requests",
+        "parentId": "routes/dsa_dashboard/layout",
+        "file": "app/routes/dsa_dashboard/pass-requests.tsx",
+        "path": "/dsa-dashboard/pass-requests",
+        "config": {}
+      },
+      "routes/dsa_dashboard/students": {
+        "id": "routes/dsa_dashboard/students",
+        "parentId": "routes/dsa_dashboard/layout",
+        "file": "app/routes/dsa_dashboard/students.tsx",
+        "path": "/dsa-dashboard/students",
+        "config": {}
+      },
+      "routes/dsa_dashboard/notifications": {
+        "id": "routes/dsa_dashboard/notifications",
+        "parentId": "routes/dsa_dashboard/layout",
+        "file": "app/routes/dsa_dashboard/notifications.tsx",
+        "path": "/dsa-dashboard/notifications",
+        "config": {}
+      },
+      "routes/cso_dashboard/layout": {
+        "id": "routes/cso_dashboard/layout",
+        "parentId": "root",
+        "file": "app/routes/cso_dashboard/layout.tsx",
+        "config": {}
+      },
+      "routes/cso_dashboard/cso-dashboard": {
+        "id": "routes/cso_dashboard/cso-dashboard",
+        "parentId": "routes/cso_dashboard/layout",
+        "file": "app/routes/cso_dashboard/cso-dashboard.tsx",
+        "path": "cso-dashboard",
+        "config": {}
+      },
+      "routes/cso_dashboard/pass-requests": {
+        "id": "routes/cso_dashboard/pass-requests",
+        "parentId": "routes/cso_dashboard/layout",
+        "file": "app/routes/cso_dashboard/pass-requests.tsx",
+        "path": "/cso-dashboard/pass-requests",
+        "config": {}
+      },
+      "routes/cso_dashboard/analytics": {
+        "id": "routes/cso_dashboard/analytics",
+        "parentId": "routes/cso_dashboard/layout",
+        "file": "app/routes/cso_dashboard/analytics.tsx",
+        "path": "/cso-dashboard/analytics",
+        "config": {}
+      },
+      "routes/cso_dashboard/students": {
+        "id": "routes/cso_dashboard/students",
+        "parentId": "routes/cso_dashboard/layout",
+        "file": "app/routes/cso_dashboard/students.tsx",
+        "path": "/cso-dashboard/students",
+        "config": {}
+      },
+      "routes/cso_dashboard/notifications": {
+        "id": "routes/cso_dashboard/notifications",
+        "parentId": "routes/cso_dashboard/layout",
+        "file": "app/routes/cso_dashboard/notifications.tsx",
+        "path": "/cso-dashboard/notifications",
+        "config": {}
+      },
+      "dashboard/page": {
+        "id": "dashboard/page",
+        "parentId": "root",
+        "file": "app/dashboard/page.tsx",
+        "path": "/test",
+        "config": {}
+      },
+      "routes/auth/dashboard": {
+        "id": "routes/auth/dashboard",
+        "parentId": "root",
+        "file": "app/routes/auth/dashboard.tsx",
+        "path": "dashboard",
+        "config": {}
+      }
+    }
+  },
+  "reactRouterConfig": {
+    "appDirectory": "C:/Users/HP/Desktop/react-router-v7/app",
+    "basename": "/",
+    "buildDirectory": "C:/Users/HP/Desktop/react-router-v7/build",
+    "future": {
+      "v8_middleware": false,
+      "unstable_optimizeDeps": false,
+      "unstable_splitRouteModules": false,
+      "unstable_subResourceIntegrity": false,
+      "unstable_viteEnvironmentApi": false
+    },
+    "prerender": [
+      "/",
+      "/register",
+      "/login"
+    ],
+    "routes": {
+      "root": {
+        "id": "root",
+        "file": "root.tsx",
+        "path": ""
+      },
+      "routes/home/layout": {
+        "id": "routes/home/layout",
+        "parentId": "root",
+        "file": "routes/home/layout.tsx"
+      },
+      "routes/home/home": {
+        "id": "routes/home/home",
+        "parentId": "routes/home/layout",
+        "file": "routes/home/home.tsx",
+        "index": true
+      },
+      "routes/auth/login": {
+        "id": "routes/auth/login",
+        "parentId": "root",
+        "file": "routes/auth/login.tsx",
+        "path": "login"
+      },
+      "routes/auth/staff-login": {
+        "id": "routes/auth/staff-login",
+        "parentId": "root",
+        "file": "routes/auth/staff-login.tsx",
+        "path": "staff-login"
+      },
+      "routes/auth/register": {
+        "id": "routes/auth/register",
+        "parentId": "root",
+        "file": "routes/auth/register.tsx",
+        "path": "register"
+      },
+      "routes/auth/callback": {
+        "id": "routes/auth/callback",
+        "parentId": "root",
+        "file": "routes/auth/callback.tsx",
+        "path": "auth/callback"
+      },
+      "routes/auth/onboarding": {
+        "id": "routes/auth/onboarding",
+        "parentId": "root",
+        "file": "routes/auth/onboarding.tsx",
+        "path": "onboarding"
+      },
+      "routes/student_dashboard/layout": {
+        "id": "routes/student_dashboard/layout",
+        "parentId": "root",
+        "file": "routes/student_dashboard/layout.tsx"
+      },
+      "routes/student_dashboard/student-dashboard": {
+        "id": "routes/student_dashboard/student-dashboard",
+        "parentId": "routes/student_dashboard/layout",
+        "file": "routes/student_dashboard/student-dashboard.tsx",
+        "path": "/student-dashboard"
+      },
+      "routes/student_dashboard/apply-for-pass": {
+        "id": "routes/student_dashboard/apply-for-pass",
+        "parentId": "routes/student_dashboard/layout",
+        "file": "routes/student_dashboard/apply-for-pass.tsx",
+        "path": "/student-dashboard/apply-for-pass"
+      },
+      "routes/student_dashboard/my-pass-requests": {
+        "id": "routes/student_dashboard/my-pass-requests",
+        "parentId": "routes/student_dashboard/layout",
+        "file": "routes/student_dashboard/my-pass-requests.tsx",
+        "path": "/student-dashboard/my-pass-requests"
+      },
+      "routes/student_dashboard/profile": {
+        "id": "routes/student_dashboard/profile",
+        "parentId": "routes/student_dashboard/layout",
+        "file": "routes/student_dashboard/profile.tsx",
+        "path": "/student-dashboard/my-profile"
+      },
+      "routes/student_dashboard/notifications": {
+        "id": "routes/student_dashboard/notifications",
+        "parentId": "routes/student_dashboard/layout",
+        "file": "routes/student_dashboard/notifications.tsx",
+        "path": "/student-dashboard/notifications"
+      },
+      "routes/dsa_dashboard/layout": {
+        "id": "routes/dsa_dashboard/layout",
+        "parentId": "root",
+        "file": "routes/dsa_dashboard/layout.tsx"
+      },
+      "routes/dsa_dashboard/dsa-dashboard": {
+        "id": "routes/dsa_dashboard/dsa-dashboard",
+        "parentId": "routes/dsa_dashboard/layout",
+        "file": "routes/dsa_dashboard/dsa-dashboard.tsx",
+        "path": "/dsa-dashboard"
+      },
+      "routes/dsa_dashboard/analytics": {
+        "id": "routes/dsa_dashboard/analytics",
+        "parentId": "routes/dsa_dashboard/layout",
+        "file": "routes/dsa_dashboard/analytics.tsx",
+        "path": "/dsa-dashboard/analytics"
+      },
+      "routes/dsa_dashboard/pass-requests": {
+        "id": "routes/dsa_dashboard/pass-requests",
+        "parentId": "routes/dsa_dashboard/layout",
+        "file": "routes/dsa_dashboard/pass-requests.tsx",
+        "path": "/dsa-dashboard/pass-requests"
+      },
+      "routes/dsa_dashboard/students": {
+        "id": "routes/dsa_dashboard/students",
+        "parentId": "routes/dsa_dashboard/layout",
+        "file": "routes/dsa_dashboard/students.tsx",
+        "path": "/dsa-dashboard/students"
+      },
+      "routes/dsa_dashboard/notifications": {
+        "id": "routes/dsa_dashboard/notifications",
+        "parentId": "routes/dsa_dashboard/layout",
+        "file": "routes/dsa_dashboard/notifications.tsx",
+        "path": "/dsa-dashboard/notifications"
+      },
+      "routes/cso_dashboard/layout": {
+        "id": "routes/cso_dashboard/layout",
+        "parentId": "root",
+        "file": "routes/cso_dashboard/layout.tsx"
+      },
+      "routes/cso_dashboard/cso-dashboard": {
+        "id": "routes/cso_dashboard/cso-dashboard",
+        "parentId": "routes/cso_dashboard/layout",
+        "file": "routes/cso_dashboard/cso-dashboard.tsx",
+        "path": "cso-dashboard"
+      },
+      "routes/cso_dashboard/pass-requests": {
+        "id": "routes/cso_dashboard/pass-requests",
+        "parentId": "routes/cso_dashboard/layout",
+        "file": "routes/cso_dashboard/pass-requests.tsx",
+        "path": "/cso-dashboard/pass-requests"
+      },
+      "routes/cso_dashboard/analytics": {
+        "id": "routes/cso_dashboard/analytics",
+        "parentId": "routes/cso_dashboard/layout",
+        "file": "routes/cso_dashboard/analytics.tsx",
+        "path": "/cso-dashboard/analytics"
+      },
+      "routes/cso_dashboard/students": {
+        "id": "routes/cso_dashboard/students",
+        "parentId": "routes/cso_dashboard/layout",
+        "file": "routes/cso_dashboard/students.tsx",
+        "path": "/cso-dashboard/students"
+      },
+      "routes/cso_dashboard/notifications": {
+        "id": "routes/cso_dashboard/notifications",
+        "parentId": "routes/cso_dashboard/layout",
+        "file": "routes/cso_dashboard/notifications.tsx",
+        "path": "/cso-dashboard/notifications"
+      },
+      "dashboard/page": {
+        "id": "dashboard/page",
+        "parentId": "root",
+        "file": "dashboard/page.tsx",
+        "path": "/test"
+      },
+      "routes/auth/dashboard": {
+        "id": "routes/auth/dashboard",
+        "parentId": "root",
+        "file": "routes/auth/dashboard.tsx",
+        "path": "dashboard"
+      }
+    },
+    "routeDiscovery": {
+      "mode": "lazy",
+      "manifestPath": "/__manifest"
+    },
+    "serverBuildFile": "index.js",
+    "serverModuleFormat": "esm",
+    "ssr": true,
+    "unstable_routeConfig": [
+      {
+        "id": "root",
+        "path": "",
+        "file": "root.tsx",
+        "children": [
+          {
+            "file": "routes/home/layout.tsx",
+            "children": [
+              {
+                "file": "routes/home/home.tsx",
+                "index": true
+              }
+            ]
+          },
+          {
+            "file": "routes/auth/login.tsx",
+            "path": "login"
+          },
+          {
+            "file": "routes/auth/staff-login.tsx",
+            "path": "staff-login"
+          },
+          {
+            "file": "routes/auth/register.tsx",
+            "path": "register"
+          },
+          {
+            "file": "routes/auth/callback.tsx",
+            "path": "auth/callback"
+          },
+          {
+            "file": "routes/auth/onboarding.tsx",
+            "path": "onboarding"
+          },
+          {
+            "file": "routes/student_dashboard/layout.tsx",
+            "children": [
+              {
+                "file": "routes/student_dashboard/student-dashboard.tsx",
+                "path": "/student-dashboard"
+              },
+              {
+                "file": "routes/student_dashboard/apply-for-pass.tsx",
+                "path": "/student-dashboard/apply-for-pass"
+              },
+              {
+                "file": "routes/student_dashboard/my-pass-requests.tsx",
+                "path": "/student-dashboard/my-pass-requests"
+              },
+              {
+                "file": "routes/student_dashboard/profile.tsx",
+                "path": "/student-dashboard/my-profile"
+              },
+              {
+                "file": "routes/student_dashboard/notifications.tsx",
+                "path": "/student-dashboard/notifications"
+              }
+            ]
+          },
+          {
+            "file": "routes/dsa_dashboard/layout.tsx",
+            "children": [
+              {
+                "file": "routes/dsa_dashboard/dsa-dashboard.tsx",
+                "path": "/dsa-dashboard"
+              },
+              {
+                "file": "routes/dsa_dashboard/analytics.tsx",
+                "path": "/dsa-dashboard/analytics"
+              },
+              {
+                "file": "routes/dsa_dashboard/pass-requests.tsx",
+                "path": "/dsa-dashboard/pass-requests"
+              },
+              {
+                "file": "routes/dsa_dashboard/students.tsx",
+                "path": "/dsa-dashboard/students"
+              },
+              {
+                "file": "routes/dsa_dashboard/notifications.tsx",
+                "path": "/dsa-dashboard/notifications"
+              }
+            ]
+          },
+          {
+            "file": "routes/cso_dashboard/layout.tsx",
+            "children": [
+              {
+                "file": "routes/cso_dashboard/cso-dashboard.tsx",
+                "path": "cso-dashboard"
+              },
+              {
+                "file": "routes/cso_dashboard/pass-requests.tsx",
+                "path": "/cso-dashboard/pass-requests"
+              },
+              {
+                "file": "routes/cso_dashboard/analytics.tsx",
+                "path": "/cso-dashboard/analytics"
+              },
+              {
+                "file": "routes/cso_dashboard/students.tsx",
+                "path": "/cso-dashboard/students"
+              },
+              {
+                "file": "routes/cso_dashboard/notifications.tsx",
+                "path": "/cso-dashboard/notifications"
+              }
+            ]
+          },
+          {
+            "file": "dashboard/page.tsx",
+            "path": "/test"
+          },
+          {
+            "file": "routes/auth/dashboard.tsx",
+            "path": "dashboard"
+          }
+        ]
+      }
+    ]
+  },
+  "viteConfig": {
+    "build": {
+      "assetsDir": "assets"
+    }
+  }
+}

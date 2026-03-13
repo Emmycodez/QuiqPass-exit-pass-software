@@ -80,8 +80,8 @@ export default function StudentSettingsPage({
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Email</span>
-              <span className="font-medium">{student?.email ?? "—"}</span>
+              <span className="text-muted-foreground">Email: </span>
+              <span className="font-medium ms-2">{student?.email ?? "—"}</span>
             </div>
           </CardContent>
         </Card>

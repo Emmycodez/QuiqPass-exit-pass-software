@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(npm run typecheck:*)",
-      "Bash(npx react-router typegen:*)"
+      "Bash(npx react-router typegen:*)",
+      "Bash(cd /C/Users/HP/Desktop/react-router-v7 && rm app/routes/dsa_dashboard/settings.tsx)",
+      "Bash(cd \"C:\\\\Users\\\\HP\\\\Desktop\\\\react-router-v7\" && node -e \"\nconst sharp = require\\('sharp'\\);\nPromise.all\\([\n  sharp\\('public/wellspring-logo.jpg'\\).resize\\(192, 192, { fit: 'contain', background: { r: 99, g: 102, b: 241, alpha: 1 } }\\).png\\(\\).toFile\\('public/icon-192.png'\\),\n  sharp\\('public/wellspring-logo.jpg'\\).resize\\(512, 512, { fit: 'contain', background: { r: 99, g: 102, b: 241, alpha: 1 } }\\).png\\(\\).toFile\\('public/icon-512.png'\\),\n]\\).then\\(\\(\\) => console.log\\('Icons generated'\\)\\).catch\\(console.error\\);\n\" 2>&1)"
     ]
   }
 }

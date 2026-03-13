@@ -11,12 +11,10 @@ import { Switch } from "~/components/ui/switch";
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding)
-    .replace(/-/g, "+")
-    .replace(/_/g, "/");
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
   const rawData = atob(base64);
   return new Uint8Array(
-    [...rawData].map((c) => c.charCodeAt(0))
+    [...rawData].map((c) => c.charCodeAt(0)),
   ) as Uint8Array<ArrayBuffer>;
 }
 
@@ -98,7 +96,7 @@ export function PwaSettingsCard() {
               p256dh: subJson.keys.p256dh,
               auth_key: subJson.keys.auth,
             },
-            { onConflict: "user_id,endpoint" }
+            { onConflict: "user_id,endpoint" },
           );
         }
         setIsSubscribed(true);
@@ -192,7 +190,7 @@ export function PwaSettingsCard() {
             p256dh: subJson.keys.p256dh,
             auth_key: subJson.keys.auth,
           },
-          { onConflict: "user_id,endpoint" }
+          { onConflict: "user_id,endpoint" },
         );
       }
       setIsSubscribed(true);
@@ -223,8 +221,8 @@ export function PwaSettingsCard() {
             {notificationsOn
               ? "You will receive push notifications for pass updates."
               : permission === "denied"
-              ? "Notifications blocked in browser settings."
-              : "Enable push notifications to receive pass updates."}
+                ? "Notifications blocked in browser settings."
+                : "Enable push notifications to receive pass updates."}
           </p>
           <Switch
             checked={notificationsOn}
@@ -240,6 +238,7 @@ export function PwaSettingsCard() {
             size="sm"
             onClick={handleTest}
             disabled={!notificationsOn || loading !== null}
+            className="text-muted-foreground"
           >
             <TestTube2 className="mr-1.5 h-3.5 w-3.5" />
             {loading === "test" ? "Sending…" : "Test Notification"}
@@ -256,6 +255,7 @@ export function PwaSettingsCard() {
             size="sm"
             onClick={handleUpdate}
             disabled={loading !== null}
+            className="text-muted-foreground"
           >
             <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
             {loading === "update" ? "Updating…" : "Update Service Worker"}
@@ -265,9 +265,12 @@ export function PwaSettingsCard() {
             size="sm"
             onClick={handleForceResubscribe}
             disabled={loading !== null}
+            className="text-muted-foreground"
           >
             <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-            {loading === "resubscribe" ? "Re-subscribing…" : "Force Re-subscribe"}
+            {loading === "resubscribe"
+              ? "Re-subscribing…"
+              : "Force Re-subscribe"}
           </Button>
         </div>
       </CardContent>

@@ -12,9 +12,11 @@ import {
 
 // ─── YouTube video links — fill these in ────────────────────────────────────
 // UPDATE THESE three constants with your YouTube links:
-const YOUTUBE_ANDROID = "https://www.youtube.com/watch?v=ANDROID_VIDEO_ID";
-const YOUTUBE_IOS = "https://www.youtube.com/watch?v=IOS_VIDEO_ID";
-const YOUTUBE_PC = "https://www.youtube.com/watch?v=PC_VIDEO_ID";
+const YOUTUBE_ANDROID =
+  "https://youtube.com/shorts/Ak3otWdJtDg?si=ZZQ5Xnx0uLzikh94";
+const YOUTUBE_IOS =
+  "https://youtube.com/shorts/xL8WMqbqca8?si=OWk7oJmzM8ga4ecK";
+const YOUTUBE_PC = "https://youtu.be/vaZCRZbV7Ok?si=jN8UQcOI2oUMDW50";
 // ────────────────────────────────────────────────────────────────────────────
 
 type Platform = "ios" | "android" | "pc";
@@ -22,7 +24,11 @@ type Platform = "ios" | "android" | "pc";
 function detectPlatform(): Platform {
   if (typeof navigator === "undefined") return "pc";
   const ua = navigator.userAgent;
-  if (/iPad|iPhone|iPod/.test(ua) && !(window as unknown as { MSStream: unknown }).MSStream) return "ios";
+  if (
+    /iPad|iPhone|iPod/.test(ua) &&
+    !(window as unknown as { MSStream: unknown }).MSStream
+  )
+    return "ios";
   if (/android/i.test(ua)) return "android";
   return "pc";
 }
@@ -46,7 +52,7 @@ const instructions: Record<
     title: "Install on Android",
     steps: [
       "Open QuiqPass in Chrome.",
-      'Tap the three-dot menu (⋮) in the top-right corner.',
+      "Tap the three-dot menu (⋮) in the top-right corner.",
       'Select "Add to Home screen".',
       'Tap "Add" in the confirmation dialog.',
       "QuiqPass will appear on your home screen like a native app.",
@@ -57,8 +63,8 @@ const instructions: Record<
     icon: <Smartphone className="h-5 w-5" />,
     title: "Install on iPhone / iPad",
     steps: [
-      "Open QuiqPass in Safari (must be Safari, not Chrome).",
-      'Tap the Share button (□ with an arrow) at the bottom of the screen.',
+      "Open QuiqPass in Safari or Chrome.",
+      "Tap the Share button (□ with an arrow) at the bottom of the screen.",
       'Scroll down and tap "Add to Home Screen".',
       'Tap "Add" in the top-right corner.',
       "QuiqPass will appear on your home screen like a native app.",
@@ -103,7 +109,12 @@ export function PwaInstallPrompt() {
   const info = instructions[platform];
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) handleDismiss(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) handleDismiss();
+      }}
+    >
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
