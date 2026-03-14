@@ -1,11 +1,12 @@
 import {
   BellIcon,
-  CreditCardIcon,
+  Loader2Icon,
   LogOutIcon,
   MoreVerticalIcon,
-  UserCircleIcon,
 } from "lucide-react";
-import { Link, redirect } from "react-router";
+import { useState } from "react";
+import { Link } from "react-router";
+import toast from "react-hot-toast";
 import { supabase } from "supabase/supabase-client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
@@ -27,32 +28,34 @@ import {
 
 export function NavUser({
   user,
+  notificationsUrl = "/student-dashboard/notifications",
 }: {
   user: {
     name: string;
     email: string;
     avatar?: string;
   };
+  notificationsUrl?: string;
 }) {
   const { isMobile } = useSidebar();
+  const [loggingOut, setLoggingOut] = useState(false);
 
   function getInitials(name: string = "") {
     const parts = name.trim().split(" ").filter(Boolean);
-
     if (parts.length === 0) return "";
     if (parts.length === 1) return parts[0][0].toUpperCase();
-
     return (parts[0][0] + parts[1][0]).toUpperCase();
   }
 
   async function handleLogout() {
+    setLoggingOut(true);
     const { error } = await supabase.auth.signOut();
     if (error) {
       console.error("Logout failed:", error);
+      toast.error("Logout failed. Please try again.");
+      setLoggingOut(false);
       return;
     }
-
-    // Optionally redirect to login page
     window.location.href = "/login";
   }
 
@@ -67,7 +70,6 @@ export function NavUser({
             >
               <Avatar>
                 <AvatarImage src={user.avatar} alt={user.name} />
-
                 <AvatarFallback className="rounded-lg">
                   {getInitials(user.name)}
                 </AvatarFallback>
@@ -82,6 +84,7 @@ export function NavUser({
               <MoreVerticalIcon className="ml-auto size-4" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
+
           <DropdownMenuContent
             className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
             side={isMobile ? "bottom" : "right"}
@@ -92,12 +95,10 @@ export function NavUser({
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar>
                   <AvatarImage src={user.avatar} alt={user.name} />
-
                   <AvatarFallback className="rounded-lg">
                     {getInitials(user.name)}
                   </AvatarFallback>
                 </Avatar>
-
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
                   <span className="truncate text-xs text-muted-foreground">
@@ -106,19 +107,31 @@ export function NavUser({
                 </div>
               </div>
             </DropdownMenuLabel>
+
             <DropdownMenuSeparator />
+
             <DropdownMenuGroup>
-              <Link to="/student-dashboard/notifications">
-                <DropdownMenuItem>
-                  <BellIcon />
+              <DropdownMenuItem asChild>
+                <Link to={notificationsUrl}>
+                  <BellIcon className="mr-2 h-4 w-4" />
                   Notifications
-                </DropdownMenuItem>
-              </Link>
+                </Link>
+              </DropdownMenuItem>
             </DropdownMenuGroup>
+
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout}>
-              <LogOutIcon className="mr-2 h-4 w-4" />
-              Log out
+
+            <DropdownMenuItem
+              onClick={handleLogout}
+              disabled={loggingOut}
+              className="text-destructive focus:text-destructive"
+            >
+              {loggingOut ? (
+                <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <LogOutIcon className="mr-2 h-4 w-4" />
+              )}
+              {loggingOut ? "Logging out…" : "Log out"}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

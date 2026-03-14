@@ -211,7 +211,7 @@ const StudentDashboardLayout = () => {
 
       {/* Sidebar and content */}
       <div className="relative z-10">
-        <CustomSidebar gradientStyle={gradientStyle} footer={<NavUser user={data.user} />}>
+        <CustomSidebar gradientStyle={gradientStyle} footer={<NavUser user={data.user} notificationsUrl="/student-dashboard/notifications" />}>
           <NavMain items={data.navMain} />
         </CustomSidebar>
 
