@@ -46,6 +46,14 @@ export async function clientLoader() {
       return redirect("/porter-dashboard");
     }
 
+    if (role === "dsa") {
+      return redirect("/dsa-dashboard");
+    }
+
+    if (role === "admin") {
+      return redirect("/admin-dashboard");
+    }
+
     if (role === "cso" || role === "assistant cso") {
       return redirect("/cso-dashboard");
     }

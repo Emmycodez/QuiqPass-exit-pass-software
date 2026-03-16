@@ -81,7 +81,7 @@ const PorterDashboardLayout = () => {
         </CustomSidebar>
 
         <div className="ml-0 md:ml-64 min-h-screen">
-          <div className="p-[24px]">
+          <div className="px-[24px] pb-[24px] pt-16 md:pt-[24px]">
             <Outlet context={{ porter }} />
           </div>
         </div>

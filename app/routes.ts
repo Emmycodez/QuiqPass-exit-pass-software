@@ -69,6 +69,15 @@ export default [
     route("/porter-dashboard/mark", "routes/porter_dashboard/mark-attendance.tsx"),
     route("/porter-dashboard/settings", "routes/porter_dashboard/settings.tsx"),
   ]),
+  layout("routes/admin/layout.tsx", [
+    route("/admin-dashboard", "routes/admin/index.tsx"),
+    route("/admin-dashboard/staff", "routes/admin/staff.tsx"),
+    route("/admin-dashboard/hostels", "routes/admin/hostels.tsx"),
+    route("/admin-dashboard/rooms", "routes/admin/rooms.tsx"),
+    route("/admin-dashboard/students", "routes/admin/students.tsx"),
+    route("/admin-dashboard/audit-logs", "routes/admin/audit-logs.tsx"),
+    route("/admin-dashboard/settings", "routes/admin/settings.tsx"),
+  ]),
   route("/test", "dashboard/page.tsx"),
   route("dashboard", "routes/auth/dashboard.tsx"),
 ] satisfies RouteConfig;
