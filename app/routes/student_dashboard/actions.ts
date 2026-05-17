@@ -182,7 +182,7 @@ export async function applyForStudentPass(formData: FormData, request: Request) 
       action: 'pass_requested',
       entity_type: 'pass',
       entity_id: pass.id,
-      metadata: {
+      details: {
         pass_type: passType,
         destination,
       },

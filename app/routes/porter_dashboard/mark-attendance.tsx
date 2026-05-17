@@ -226,7 +226,7 @@ export default function MarkAttendancePage() {
                         src={student.photo_url ?? undefined}
                         alt={student.first_name}
                       />
-                      <AvatarFallback>
+                      <AvatarFallback className="bg-gray-200 text-gray-700">
                         {getInitials(student.first_name, student.last_name)}
                       </AvatarFallback>
                     </Avatar>

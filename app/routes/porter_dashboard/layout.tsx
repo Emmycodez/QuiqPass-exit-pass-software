@@ -1,4 +1,5 @@
-import { IconBuilding, IconHome, IconSettings } from "@tabler/icons-react";
+import { IconHome, IconSettings } from "@tabler/icons-react";
+import { Avatar, AvatarFallback } from "~/components/ui/avatar";
 import { Outlet, redirect, useLoaderData } from "react-router";
 import { supabase } from "supabase/supabase-client";
 import { PwaInstallPrompt } from "~/components/pwa-install-prompt";
@@ -68,15 +69,21 @@ const PorterDashboardLayout = () => {
           footer={<SidebarFeedbackForm route="Porter" />}
         >
           <div className="px-4 py-3">
-            <div className="flex items-center gap-2 mb-1">
-              <IconBuilding className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">
-                {porter.first_name} {porter.last_name}
-              </span>
+            <div className="flex items-center gap-3 mb-1">
+              <Avatar className="h-8 w-8 shrink-0">
+                <AvatarFallback className="bg-gray-200 text-gray-700 text-xs font-semibold">
+                  {porter.first_name[0]}{porter.last_name[0]}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="text-sm font-medium leading-none">
+                  {porter.first_name} {porter.last_name}
+                </p>
+                <p className="text-xs text-muted-foreground capitalize mt-0.5">
+                  {porter.gender ?? "—"} Hostel Porter
+                </p>
+              </div>
             </div>
-            <span className="text-xs text-muted-foreground ml-6 capitalize">
-              {porter.gender ?? "—"} hostel porter
-            </span>
           </div>
           <NavMain items={navMain} />
         </CustomSidebar>

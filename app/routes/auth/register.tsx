@@ -120,7 +120,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       action: "user_registered",
       entity_type: "student",
       entity_id: authData.user.id,
-      metadata: {
+      details: {
         registration_method: "email_password",
       },
     });
