@@ -1,8 +1,6 @@
 import {
   departments,
-  femaleHostels,
   levels,
-  MaleHostels,
 } from "data/onboardingData";
 import {
   ChevronLeft,
@@ -344,17 +342,13 @@ export default function OnboardingForm({
                   <SelectValue placeholder="Select your hostel" />
                 </SelectTrigger>
                 <SelectContent>
-                  {formData.gender == "male"
-                    ? MaleHostels.map((hostel) => (
-                        <SelectItem key={hostel} value={hostel}>
-                          {hostel}
-                        </SelectItem>
-                      ))
-                    : femaleHostels.map((hostel) => (
-                        <SelectItem key={hostel} value={hostel}>
-                          {hostel}
-                        </SelectItem>
-                      ))}
+                  {(data.hostels ?? [])
+                    .filter((h) => !formData.gender || h.gender === formData.gender)
+                    .map((h) => (
+                      <SelectItem key={h.id} value={h.name}>
+                        {h.name}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>

@@ -19,7 +19,8 @@ export interface PasswordInputProps {
 export interface OnboardingFormProps{
   firstName: string;
   lastName: string;
-  email: string
+  email: string;
+  hostels?: { id: string; name: string; gender: string }[];
 }
 
 export type SessionData = {

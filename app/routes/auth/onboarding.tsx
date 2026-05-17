@@ -40,6 +40,7 @@ const OnboardingPage = ({ loaderData }: Route.ComponentProps) => {
     email: loaderData.user?.email || "",
     firstName: loaderData.user?.first_name || "",
     lastName: loaderData.user?.last_name || "",
+    hostels: loaderData.hostels ?? [],
   };
 
   if (loaderData.status === 302) {

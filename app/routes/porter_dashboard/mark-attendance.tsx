@@ -231,11 +231,11 @@ export default function MarkAttendancePage() {
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">
+                      <p className="font-medium truncate text-gray-900">
                         {student.first_name} {student.last_name}
                       </p>
                       {student.matric_no && (
-                        <p className="text-xs text-muted-foreground truncate">
+                        <p className="text-xs text-gray-500 truncate">
                           {student.matric_no}
                         </p>
                       )}

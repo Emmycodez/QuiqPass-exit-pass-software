@@ -38,12 +38,18 @@ export const fetchOnboardingFormData = async () => {
         user.user_metadata?.full_name?.split(" ").slice(1).join(" ") || "",
     };
     
+    const { data: hostels } = await supabase
+      .from("hostel")
+      .select("id, name, gender")
+      .order("name");
+
     return {
       success: true,
       error: false,
       message: "User data fetched successfully.",
       status: 200,
       user: userData,
+      hostels: hostels ?? [],
     }
   } catch (error) {
     return {
