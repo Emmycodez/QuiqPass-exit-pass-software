@@ -50,12 +50,14 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
 
   if (!room) throw redirect("/porter-dashboard");
 
-  // Fetch students assigned to this room
+  // Students store room_number as a plain number ("34") while room.name is "Room 34"
+  const roomNumber = room.name.replace(/^Room\s+/i, "");
+
   const { data: students } = await supabase
     .from("student")
     .select("id, first_name, last_name, matric_no, photo_url")
     .eq("hostel_id", hostelId)
-    .eq("room_number", room.name);
+    .eq("room_number", roomNumber);
 
   const studentList = students ?? [];
   if (studentList.length === 0) {

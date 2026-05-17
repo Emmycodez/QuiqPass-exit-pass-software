@@ -144,6 +144,8 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
       // Redirect based on staff role
       switch (staff.role) {
+        case "admin":
+          return redirect("/admin-dashboard");
         case "DSA":
           return redirect("/dsa-dashboard");
         case "CSO":

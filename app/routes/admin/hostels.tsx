@@ -60,12 +60,18 @@ export default function AdminHostelsPage({ loaderData }: Route.ComponentProps) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [gender, setGender] = useState("");
+  const [roomCount, setRoomCount] = useState("");
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
 
   async function handleCreate() {
     if (!name.trim() || !gender) {
       toast.error("Name and gender are required.");
+      return;
+    }
+    const numRooms = roomCount ? parseInt(roomCount, 10) : 0;
+    if (roomCount && (isNaN(numRooms) || numRooms < 1 || numRooms > 500)) {
+      toast.error("Room count must be between 1 and 500.");
       return;
     }
     setSaving(true);
@@ -77,11 +83,22 @@ export default function AdminHostelsPage({ loaderData }: Route.ComponentProps) {
         .single();
 
       if (error) throw error;
-      setHostels((prev) => [{ ...data, roomCount: 0 }, ...prev]);
+
+      if (numRooms > 0) {
+        const rooms = Array.from({ length: numRooms }, (_, i) => ({
+          hostel_id: data.id,
+          name: `Room ${i + 1}`,
+        }));
+        const { error: roomError } = await supabase.from("room").insert(rooms);
+        if (roomError) throw roomError;
+      }
+
+      setHostels((prev) => [{ ...data, roomCount: numRooms }, ...prev]);
       setName("");
       setGender("");
+      setRoomCount("");
       setOpen(false);
-      toast.success("Hostel created.");
+      toast.success(`Hostel created${numRooms > 0 ? ` with ${numRooms} rooms` : ""}.`);
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed to create hostel.");
     } finally {
@@ -108,7 +125,7 @@ export default function AdminHostelsPage({ loaderData }: Route.ComponentProps) {
       <DashboardHeaders mainText="Hostel Management" subText="Create and manage student hostels" />
 
       <div className="flex justify-end">
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setName(""); setGender(""); setRoomCount(""); } }}>
           <DialogTrigger asChild>
             <Button><Plus className="mr-2 h-4 w-4" />Add Hostel</Button>
           </DialogTrigger>
@@ -128,6 +145,18 @@ export default function AdminHostelsPage({ loaderData }: Route.ComponentProps) {
                     <SelectItem value="female">Female</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Number of Rooms <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={500}
+                  value={roomCount}
+                  onChange={(e) => setRoomCount(e.target.value)}
+                  placeholder="e.g. 20"
+                />
+                <p className="text-xs text-muted-foreground">Rooms will be pre-created as Room 1, Room 2, …</p>
               </div>
               <Button className="w-full" onClick={handleCreate} disabled={saving}>
                 {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}

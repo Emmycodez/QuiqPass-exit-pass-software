@@ -1,4 +1,5 @@
-import { ArrowLeft, CheckCircle2, ChevronRight, DoorOpen } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ChevronRight, DoorOpen, Search } from "lucide-react";
+import { useState } from "react";
 import { Link, redirect, useLoaderData } from "react-router";
 import { supabase } from "supabase/supabase-client";
 import { Badge } from "~/components/ui/badge";
@@ -9,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
+import { Input } from "~/components/ui/input";
 import type { Route } from "./+types/rooms";
 
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
@@ -60,6 +62,15 @@ export default function PorterRoomsPage() {
     ReturnType<typeof clientLoader>
   >;
 
+  const [search, setSearch] = useState("");
+
+  const filtered = search.trim()
+    ? rooms.filter((r) => {
+        const num = r.name.replace(/^Room\s+/i, "");
+        return num.startsWith(search.trim());
+      })
+    : rooms;
+
   const done = rooms.filter((r) => r.markedToday).length;
   const total = rooms.length;
   const allDone = total > 0 && done === total;
@@ -86,6 +97,20 @@ export default function PorterRoomsPage() {
         )}
       </div>
 
+      {/* Search */}
+      {rooms.length > 0 && (
+        <div className="relative max-w-xs">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input
+            type="number"
+            placeholder="Search room number…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-8"
+          />
+        </div>
+      )}
+
       {/* Rooms list */}
       {rooms.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -95,9 +120,15 @@ export default function PorterRoomsPage() {
             Ask the admin to add rooms for this hostel.
           </p>
         </div>
+      ) : filtered.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <DoorOpen className="h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium">No rooms match "{search}"</h3>
+          <p className="text-sm text-muted-foreground mt-1">Try a different number.</p>
+        </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {rooms.map((room) => (
+          {filtered.map((room) => (
             <Link
               key={room.id}
               to={

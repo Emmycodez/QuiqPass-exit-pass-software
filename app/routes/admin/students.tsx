@@ -23,7 +23,7 @@ export async function clientLoader() {
 
   const { data: students } = await supabase
     .from("student")
-    .select("id, first_name, last_name, email, matric_no, department, level, has_special_privilege, hostel_id, room_number, created_at")
+    .select("id, first_name, last_name, email, matric_no, department, level, has_special_privilege, hostel_id, room_number, created_at, hostel:hostel_id(name)")
     .order("created_at", { ascending: false });
 
   return { students: students ?? [] };
@@ -80,6 +80,7 @@ export default function AdminStudentsPage({ loaderData }: Route.ComponentProps) 
               <TableHead>Matric No</TableHead>
               <TableHead>Department</TableHead>
               <TableHead>Level</TableHead>
+              <TableHead>Hostel</TableHead>
               <TableHead>Room</TableHead>
               <TableHead>Special Privilege</TableHead>
               <TableHead />
@@ -88,7 +89,7 @@ export default function AdminStudentsPage({ loaderData }: Route.ComponentProps) 
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground py-12">No students found.</TableCell>
+                <TableCell colSpan={8} className="text-center text-muted-foreground py-12">No students found.</TableCell>
               </TableRow>
             ) : (
               filtered.map((s) => (
@@ -102,6 +103,7 @@ export default function AdminStudentsPage({ loaderData }: Route.ComponentProps) 
                   <TableCell className="text-sm">{s.matric_no ?? "—"}</TableCell>
                   <TableCell className="text-sm">{s.department ?? "—"}</TableCell>
                   <TableCell className="text-sm">{s.level ?? "—"}</TableCell>
+                  <TableCell className="text-sm">{(s.hostel as { name: string } | null)?.name ?? "—"}</TableCell>
                   <TableCell className="text-sm">{s.room_number ?? "—"}</TableCell>
                   <TableCell>
                     {s.has_special_privilege ? (

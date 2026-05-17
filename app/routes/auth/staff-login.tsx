@@ -88,6 +88,8 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
     // Redirect based on role
     switch (staff.role) {
+      case "admin":
+        throw redirect("/admin-dashboard");
       case "DSA":
         throw redirect("/dsa-dashboard");
       case "CSO":
