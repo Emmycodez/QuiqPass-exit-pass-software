@@ -1,10 +1,12 @@
-import { Calendar, CheckCircle2, Search, UserX } from "lucide-react";
+import { CalendarIcon, CheckCircle2, Search, UserX } from "lucide-react";
 import { useState } from "react";
-import { redirect, useLoaderData } from "react-router";
+import type { DateRange } from "react-day-picker";
+import { redirect } from "react-router";
 import { supabase } from "supabase/supabase-client";
 import { DashboardHeaders } from "~/components/dashboard";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
+import { Calendar } from "~/components/ui/calendar";
 import {
   Card,
   CardContent,
@@ -12,6 +14,11 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "~/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -27,7 +34,25 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import { cn } from "~/lib/utils";
 import type { Route } from "./+types/attendance";
+
+function toLocalDate(dateStr: string): Date {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function formatISO(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function formatDisplay(dateStr: string): string {
+  return toLocalDate(dateStr).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   const {
@@ -44,7 +69,9 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   if (!staff || staff.role !== "DSA") throw redirect("/dsa-dashboard");
 
   const url = new URL(request.url);
-  const date = url.searchParams.get("date") ?? new Date().toISOString().split("T")[0];
+  const today = new Date().toISOString().split("T")[0];
+  const dateFrom = url.searchParams.get("dateFrom") ?? today;
+  const dateTo = url.searchParams.get("dateTo") ?? dateFrom;
   const hostelId = url.searchParams.get("hostelId") ?? "all";
 
   const [hostelsRes, sessionsRes] = await Promise.all([
@@ -57,18 +84,17 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
         hostel:hostel_id ( id, name ),
         porter:porter_id ( first_name, last_name )
       `)
-      .eq("date", date)
+      .gte("date", dateFrom)
+      .lte("date", dateTo)
+      .order("date", { ascending: false })
       .order("created_at", { ascending: false }),
   ]);
 
   let sessions = sessionsRes.data ?? [];
   if (hostelId !== "all") {
-    sessions = sessions.filter(
-      (s: any) => s.hostel?.id === hostelId
-    );
+    sessions = sessions.filter((s: any) => s.hostel?.id === hostelId);
   }
 
-  // For each session get entry counts
   const sessionIds = sessions.map((s: any) => s.id);
   const { data: entries } = sessionIds.length
     ? await supabase
@@ -86,7 +112,8 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   }
 
   return {
-    date,
+    dateFrom,
+    dateTo,
     hostelId,
     hostels: hostelsRes.data ?? [],
     sessions: sessions.map((s: any) => ({
@@ -97,8 +124,15 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
 }
 
 export default function DSAAttendancePage({ loaderData }: Route.ComponentProps) {
-  const { date, hostelId, hostels, sessions } = loaderData;
+  const { dateFrom, dateTo, hostelId, hostels, sessions } = loaderData;
   const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(false);
+  const [range, setRange] = useState<DateRange | undefined>({
+    from: toLocalDate(dateFrom),
+    to: toLocalDate(dateTo),
+  });
+
+  const isRange = dateFrom !== dateTo;
 
   const filtered = sessions.filter((s: any) =>
     s.room?.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -111,6 +145,24 @@ export default function DSAAttendancePage({ loaderData }: Route.ComponentProps) 
     window.location.href = url.toString();
   }
 
+  function applyRange() {
+    if (!range?.from) return;
+    const newFrom = formatISO(range.from);
+    const newTo = range.to ? formatISO(range.to) : newFrom;
+    setOpen(false);
+    navigate({ dateFrom: newFrom, dateTo: newTo, hostelId });
+  }
+
+  function selectToday() {
+    const today = new Date();
+    setRange({ from: today, to: today });
+  }
+
+  const triggerLabel =
+    dateFrom === dateTo
+      ? formatDisplay(dateFrom)
+      : `${formatDisplay(dateFrom)} – ${formatDisplay(dateTo)}`;
+
   return (
     <div className="space-y-6">
       <DashboardHeaders
@@ -120,18 +172,41 @@ export default function DSAAttendancePage({ loaderData }: Route.ComponentProps) 
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 px-1">
-        <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-          <Input
-            type="date"
-            value={date}
-            onChange={(e) => navigate({ date: e.target.value, hostelId })}
-            className="w-40"
-          />
-        </div>
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn(
+                "justify-start text-left font-normal gap-2",
+                !dateFrom && "text-muted-foreground"
+              )}
+            >
+              <CalendarIcon className="h-4 w-4" />
+              {triggerLabel}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="range"
+              selected={range}
+              onSelect={setRange}
+              numberOfMonths={2}
+              disabled={{ after: new Date() }}
+            />
+            <div className="flex items-center justify-between border-t p-3 gap-2">
+              <Button variant="ghost" size="sm" onClick={selectToday}>
+                Today
+              </Button>
+              <Button size="sm" onClick={applyRange} disabled={!range?.from}>
+                Apply
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
+
         <Select
           value={hostelId}
-          onValueChange={(v) => navigate({ date, hostelId: v })}
+          onValueChange={(v) => navigate({ dateFrom, dateTo, hostelId: v })}
         >
           <SelectTrigger className="w-48">
             <SelectValue placeholder="All hostels" />
@@ -145,6 +220,7 @@ export default function DSAAttendancePage({ loaderData }: Route.ComponentProps) 
             ))}
           </SelectContent>
         </Select>
+
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
@@ -202,6 +278,7 @@ export default function DSAAttendancePage({ loaderData }: Route.ComponentProps) 
           <Table>
             <TableHeader>
               <TableRow>
+                {isRange && <TableHead>Date</TableHead>}
                 <TableHead>Hostel</TableHead>
                 <TableHead>Room</TableHead>
                 <TableHead>Present</TableHead>
@@ -214,6 +291,11 @@ export default function DSAAttendancePage({ loaderData }: Route.ComponentProps) 
             <TableBody>
               {filtered.map((s: any) => (
                 <TableRow key={s.id}>
+                  {isRange && (
+                    <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+                      {formatDisplay(s.date)}
+                    </TableCell>
+                  )}
                   <TableCell className="font-medium">{s.hostel?.name}</TableCell>
                   <TableCell>{s.room?.name}</TableCell>
                   <TableCell>
