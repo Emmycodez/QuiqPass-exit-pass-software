@@ -13,6 +13,7 @@ import { usePushSubscription } from "~/hooks/use-push-subscription";
 import { PwaInstallPrompt } from "~/components/pwa-install-prompt";
 import CustomSidebar from "~/components/global/custom-sidebar";
 import { SidebarFeedbackForm } from "~/components/global/sidebar-form";
+import Loader from "~/components/loader";
 import { NavMain } from "~/components/nav-main";
 
 export async function clientLoader() {
@@ -107,5 +108,9 @@ const CSODashboardLayout = () => {
     </div>
   );
 };
+
+export function HydrateFallback() {
+  return <Loader />;
+}
 
 export default CSODashboardLayout;

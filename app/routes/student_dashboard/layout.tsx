@@ -19,6 +19,7 @@ import { supabase } from "supabase/supabase-client";
 import { usePushSubscription } from "~/hooks/use-push-subscription";
 import { PwaInstallPrompt } from "~/components/pwa-install-prompt";
 import CustomSidebar from "~/components/global/custom-sidebar";
+import Loader from "~/components/loader";
 import { NavMain } from "~/components/nav-main";
 import { NavUser } from "~/components/nav-user";
 
@@ -225,5 +226,9 @@ const StudentDashboardLayout = () => {
     </div>
   );
 };
+
+export function HydrateFallback() {
+  return <Loader />;
+}
 
 export default StudentDashboardLayout;

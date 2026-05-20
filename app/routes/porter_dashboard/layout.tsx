@@ -1,5 +1,6 @@
 import { IconHome, IconSettings } from "@tabler/icons-react";
 import { Avatar, AvatarFallback } from "~/components/ui/avatar";
+import Loader from "~/components/loader";
 import { Outlet, redirect, useLoaderData } from "react-router";
 import { supabase } from "supabase/supabase-client";
 import { PwaInstallPrompt } from "~/components/pwa-install-prompt";
@@ -30,6 +31,10 @@ export async function clientLoader() {
 }
 
 export type PorterLayoutData = Awaited<ReturnType<typeof clientLoader>>;
+
+export function HydrateFallback() {
+  return <Loader />;
+}
 
 const PorterDashboardLayout = () => {
   const { porter } = useLoaderData() as PorterLayoutData;

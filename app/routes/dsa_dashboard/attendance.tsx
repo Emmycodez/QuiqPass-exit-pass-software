@@ -86,7 +86,6 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
       `)
       .gte("date", dateFrom)
       .lte("date", dateTo)
-      .order("date", { ascending: false })
       .order("created_at", { ascending: false }),
   ]);
 
@@ -121,6 +120,25 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
       counts: entryCounts[s.id] ?? { present: 0, absent: 0, onPass: 0 },
     })),
   };
+}
+
+export function HydrateFallback() {
+  return (
+    <div className="space-y-6">
+      <div className="h-8 w-48 bg-muted animate-pulse rounded" />
+      <div className="flex gap-3">
+        <div className="h-9 w-52 bg-muted animate-pulse rounded" />
+        <div className="h-9 w-48 bg-muted animate-pulse rounded" />
+        <div className="h-9 w-52 bg-muted animate-pulse rounded" />
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-24 bg-muted animate-pulse rounded-lg" />
+        ))}
+      </div>
+      <div className="h-64 bg-muted animate-pulse rounded-lg" />
+    </div>
+  );
 }
 
 export default function DSAAttendancePage({ loaderData }: Route.ComponentProps) {

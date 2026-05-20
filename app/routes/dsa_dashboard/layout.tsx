@@ -113,4 +113,8 @@ const DsaDashboardLayout = () => {
   );
 };
 
+export function HydrateFallback() {
+  return <Loader />;
+}
+
 export default DsaDashboardLayout;

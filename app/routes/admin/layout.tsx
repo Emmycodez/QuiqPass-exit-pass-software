@@ -13,6 +13,7 @@ import { PwaInstallPrompt } from "~/components/pwa-install-prompt";
 import CustomSidebar from "~/components/global/custom-sidebar";
 import { NavMain } from "~/components/nav-main";
 import { usePushSubscription } from "~/hooks/use-push-subscription";
+import Loader from "~/components/loader";
 import { SidebarFeedbackForm } from "~/components/global/sidebar-form";
 
 export async function clientLoader() {
@@ -77,5 +78,9 @@ const AdminDashboardLayout = () => {
     </div>
   );
 };
+
+export function HydrateFallback() {
+  return <Loader />;
+}
 
 export default AdminDashboardLayout;

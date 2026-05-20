@@ -1,5 +1,6 @@
 import { Building2, CheckCircle2, ChevronRight } from "lucide-react";
 import { Link, redirect, useLoaderData } from "react-router";
+import Loader from "~/components/loader";
 import { supabase } from "supabase/supabase-client";
 import { DashboardHeaders } from "~/components/dashboard";
 import { Badge } from "~/components/ui/badge";
@@ -61,6 +62,10 @@ export async function clientLoader() {
   }
 
   return { hostels, progress };
+}
+
+export function HydrateFallback() {
+  return <Loader />;
 }
 
 export default function PorterIndexPage() {

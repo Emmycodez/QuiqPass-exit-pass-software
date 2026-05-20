@@ -1,6 +1,7 @@
 import { ArrowLeft, Loader2, Plane, UserCheck, UserX } from "lucide-react";
 import { useState } from "react";
 import { Link, redirect, useLoaderData } from "react-router";
+import PageLoader from "~/components/loader";
 import toast from "react-hot-toast";
 import { supabase } from "supabase/supabase-client";
 import { Badge } from "~/components/ui/badge";
@@ -82,6 +83,10 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   }));
 
   return { room, hostelId, students: enrichedStudents };
+}
+
+export function HydrateFallback() {
+  return <PageLoader />;
 }
 
 export default function MarkAttendancePage() {

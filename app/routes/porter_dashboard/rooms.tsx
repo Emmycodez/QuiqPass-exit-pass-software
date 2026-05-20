@@ -1,6 +1,7 @@
 import { ArrowLeft, CheckCircle2, ChevronRight, DoorOpen, Search } from "lucide-react";
 import { useState } from "react";
 import { Link, redirect, useLoaderData } from "react-router";
+import Loader from "~/components/loader";
 import { supabase } from "supabase/supabase-client";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -55,6 +56,10 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
     rooms,
     hostelId,
   };
+}
+
+export function HydrateFallback() {
+  return <Loader />;
 }
 
 export default function PorterRoomsPage() {
