@@ -6,6 +6,9 @@ import tsconfigPaths from "vite-tsconfig-paths";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
+  server: {
+    port: 3000,
+  },
   css: {
     postcss: {
       plugins: [tailwindcss, autoprefixer],
@@ -58,8 +61,7 @@ export default defineConfig({
       },
 
       devOptions: {
-        // Set to true to test the SW during development
-        enabled: false,
+        enabled: true,
       },
     }),
   ],

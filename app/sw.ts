@@ -1,5 +1,7 @@
 /// <reference lib="WebWorker" />
 import { cleanupOutdatedCaches, precacheAndRoute } from "workbox-precaching";
+import { registerRoute } from "workbox-routing";
+import { NetworkOnly } from "workbox-strategies";
 
 declare const self: ServiceWorkerGlobalScope;
 
@@ -13,6 +15,13 @@ self.addEventListener("activate", (event) => {
 
 // Clean up old caches from previous SW versions
 cleanupOutdatedCaches();
+
+// React Router's internal manifest endpoint must never be served from cache —
+// returning a stale/HTML response breaks client-side navigation entirely.
+registerRoute(
+  ({ url }) => url.pathname.startsWith("/__manifest"),
+  new NetworkOnly()
+);
 
 // Precache static assets injected by vite-plugin-pwa at build time.
 // Navigation requests are NOT intercepted — the SSR server handles those.
