@@ -236,12 +236,26 @@ export const formatTime = (timeString: string | null) => {
 
 
 // 2. Add this utility function to generate and download the pass (add after your handleViewDetails function):
-export const generatePassDocument = (pass: PassRequest, studentName: string) => {
+export const generatePassDocument = async (pass: PassRequest, studentName: string): Promise<void> => {
   const printWindow = window.open('', '_blank');
-  
+
   if (!printWindow) {
     toast.error('Please allow pop-ups to download your pass');
     return;
+  }
+
+  const QRCode = (await import("qrcode")).default;
+  const verifyUrl = `${window.location.origin}/verify/${pass.id}`;
+  let qrImgHtml = `<div class="pass-id" style="font-size: 14px;">${pass.id.toUpperCase()}</div>`;
+  try {
+    const qrDataUri = await QRCode.toDataURL(verifyUrl, {
+      width: 120,
+      margin: 1,
+      color: { dark: "#1e3a8a", light: "#ffffff" },
+    });
+    qrImgHtml = `<img src="${qrDataUri}" alt="QR Code" style="width:120px;height:120px;display:block;margin:6px auto;" />`;
+  } catch {
+    // fallback to text pass ID
   }
 
   const statusColor = pass.status === 'approved' ? '#10b981' : '#3b82f6';
@@ -555,10 +569,10 @@ export const generatePassDocument = (pass: PassRequest, studentName: string) => 
           
           <!-- Verification -->
           <div class="qr-section">
-            <div class="info-label" style="margin-bottom: 4px;">Verification Code</div>
-            <div class="pass-id" style="font-size: 14px;">${pass.id.toUpperCase()}</div>
+            <div class="info-label" style="margin-bottom: 4px;">Scan to Verify</div>
+            ${qrImgHtml}
             <div style="margin-top: 4px; font-size: 9px; color: #6b7280;">
-              Present to security when exiting campus
+              Scan QR code or visit /verify/${pass.id.slice(0, 8)}...
             </div>
           </div>
         </div>

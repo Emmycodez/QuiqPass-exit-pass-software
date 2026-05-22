@@ -80,4 +80,6 @@ export default [
   ]),
   route("/test", "dashboard/page.tsx"),
   route("dashboard", "routes/auth/dashboard.tsx"),
+  route("scan", "routes/scan.tsx"),
+  route("verify/:passId", "routes/verify.$passId.tsx"),
 ] satisfies RouteConfig;

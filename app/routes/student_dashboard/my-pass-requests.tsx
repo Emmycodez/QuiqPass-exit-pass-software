@@ -370,7 +370,7 @@ export default function RequestsPage({ loaderData }: Route.ComponentProps) {
             {selectedRequest?.status === "cso_approved" && (
               <Button
                 size="sm"
-                onClick={() => generatePassDocument(selectedRequest, studentName)}
+                onClick={async () => { await generatePassDocument(selectedRequest, studentName ?? ""); }}
                 className="gap-2 w-fit"
               >
                 <Download className="h-4 w-4" />
