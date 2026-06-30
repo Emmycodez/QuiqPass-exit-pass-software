@@ -21,7 +21,23 @@
       "Read(//c/Users/HP/Desktop/**)",
       "Bash(npm init *)",
       "Bash(npm install *)",
-      "Bash(Remove-Item *)"
+      "Bash(Remove-Item *)",
+      "Bash(node -e \"const p = require\\('./package.json'\\); console.log\\(p.dependencies['react-day-picker'] || p.devDependencies?.['react-day-picker'] || 'not found'\\)\")",
+      "Bash(git fetch *)",
+      "Bash(git merge *)",
+      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\('@supabase/supabase-js:', p.dependencies['@supabase/supabase-js']\\)\")",
+      "Bash(tsc --noEmit)",
+      "Bash(netstat -ano)",
+      "Bash(findstr :5173)",
+      "Bash(tasklist *)",
+      "PowerShell(Get-Process *)",
+      "Bash(node -e \"require\\('workbox-routing'\\); require\\('workbox-strategies'\\); console.log\\('ok'\\)\")",
+      "Bash(git pull *)",
+      "Bash(git diff *)",
+      "Read(//c/Users/HP/Desktop/react-router-v7/app/routes/**)",
+      "Bash(curl -sI \"https://wellspringexitpass.vercel.app/sw.js\")",
+      "Bash(curl -s \"https://wellspringexitpass.vercel.app/sw.js\")",
+      "Bash(curl -s -i \"https://wellspringexitpass.vercel.app/__manifest?paths=%2Fdashboard&version=test\")"
     ]
   }
 }

@@ -7,12 +7,7 @@ import { DashboardHeaders } from "~/components/dashboard";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Calendar } from "~/components/ui/calendar";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import {
   Popover,
@@ -78,12 +73,14 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
     supabase.from("hostel").select("id, name, gender").order("name"),
     supabase
       .from("attendance_session")
-      .select(`
+      .select(
+        `
         id, date, created_at,
         room:room_id ( name ),
         hostel:hostel_id ( id, name ),
         porter:porter_id ( first_name, last_name )
-      `)
+      `,
+      )
       .gte("date", dateFrom)
       .lte("date", dateTo)
       .order("created_at", { ascending: false }),
@@ -102,9 +99,13 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
         .in("session_id", sessionIds)
     : { data: [] };
 
-  const entryCounts: Record<string, { present: number; absent: number; onPass: number }> = {};
+  const entryCounts: Record<
+    string,
+    { present: number; absent: number; onPass: number }
+  > = {};
   for (const e of entries ?? []) {
-    if (!entryCounts[e.session_id]) entryCounts[e.session_id] = { present: 0, absent: 0, onPass: 0 };
+    if (!entryCounts[e.session_id])
+      entryCounts[e.session_id] = { present: 0, absent: 0, onPass: 0 };
     if (e.status === "present") entryCounts[e.session_id].present++;
     else entryCounts[e.session_id].absent++;
     if (e.on_pass) entryCounts[e.session_id].onPass++;
@@ -141,7 +142,9 @@ export function HydrateFallback() {
   );
 }
 
-export default function DSAAttendancePage({ loaderData }: Route.ComponentProps) {
+export default function DSAAttendancePage({
+  loaderData,
+}: Route.ComponentProps) {
   const { dateFrom, dateTo, hostelId, hostels, sessions } = loaderData;
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
@@ -152,9 +155,10 @@ export default function DSAAttendancePage({ loaderData }: Route.ComponentProps) 
 
   const isRange = dateFrom !== dateTo;
 
-  const filtered = sessions.filter((s: any) =>
-    s.room?.name?.toLowerCase().includes(search.toLowerCase()) ||
-    s.hostel?.name?.toLowerCase().includes(search.toLowerCase())
+  const filtered = sessions.filter(
+    (s: any) =>
+      s.room?.name?.toLowerCase().includes(search.toLowerCase()) ||
+      s.hostel?.name?.toLowerCase().includes(search.toLowerCase()),
   );
 
   function navigate(params: Record<string, string>) {
@@ -196,7 +200,7 @@ export default function DSAAttendancePage({ loaderData }: Route.ComponentProps) 
               variant="outline"
               className={cn(
                 "justify-start text-left font-normal gap-2",
-                !dateFrom && "text-muted-foreground"
+                !dateFrom && "text-muted-foreground",
               )}
             >
               <CalendarIcon className="h-4 w-4" />
@@ -254,29 +258,43 @@ export default function DSAAttendancePage({ loaderData }: Route.ComponentProps) 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-1">
-            <CardTitle className="text-sm text-muted-foreground">Sessions</CardTitle>
+            <CardTitle className="text-sm text-muted-foreground">
+              Sessions
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{sessions.length}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-1">
-            <CardTitle className="text-sm text-muted-foreground">Total Present</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-green-600">
-              {sessions.reduce((acc: number, s: any) => acc + s.counts.present, 0)}
+            <p className="text-2xl font-bold text-foreground">
+              {sessions.length}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-1">
-            <CardTitle className="text-sm text-muted-foreground">Total Absent</CardTitle>
+            <CardTitle className="text-sm text-muted-foreground">
+              Total Present
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold text-green-600">
+              {sessions.reduce(
+                (acc: number, s: any) => acc + s.counts.present,
+                0,
+              )}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-1">
+            <CardTitle className="text-sm text-muted-foreground">
+              Total Absent
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-red-500">
-              {sessions.reduce((acc: number, s: any) => acc + s.counts.absent, 0)}
+              {sessions.reduce(
+                (acc: number, s: any) => acc + s.counts.absent,
+                0,
+              )}
             </p>
           </CardContent>
         </Card>
@@ -314,7 +332,9 @@ export default function DSAAttendancePage({ loaderData }: Route.ComponentProps) 
                       {formatDisplay(s.date)}
                     </TableCell>
                   )}
-                  <TableCell className="font-medium">{s.hostel?.name}</TableCell>
+                  <TableCell className="font-medium">
+                    {s.hostel?.name}
+                  </TableCell>
                   <TableCell>{s.room?.name}</TableCell>
                   <TableCell>
                     <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
