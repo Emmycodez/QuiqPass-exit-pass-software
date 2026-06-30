@@ -86,6 +86,14 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       );
     }
 
+    // Log the login
+    await supabase.from("audit_log").insert({
+      user_id: authData.user.id,
+      action: "user_logged_in",
+      entity_type: "staff",
+      entity_id: authData.user.id,
+    });
+
     // Redirect based on role
     switch (staff.role) {
       case "admin":

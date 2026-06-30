@@ -108,6 +108,15 @@ export default function AdminRoomsPage({ loaderData }: Route.ComponentProps) {
         .single();
 
       if (error) throw error;
+
+      await supabase.from("audit_log").insert({
+        user_id: (await supabase.auth.getUser()).data.user?.id,
+        action: "room_created",
+        entity_type: "room",
+        entity_id: data.id,
+        details: { name: form.name.trim(), hostel_id: form.hostelId },
+      });
+
       setRooms((prev) => [data as RoomRow, ...prev]);
       setForm({ name: "", capacity: "", hostelId: "" });
       setOpen(false);
@@ -150,6 +159,14 @@ export default function AdminRoomsPage({ loaderData }: Route.ComponentProps) {
         hostel: { name: hostelName },
       }));
 
+      await supabase.from("audit_log").insert({
+        user_id: (await supabase.auth.getUser()).data.user?.id,
+        action: "rooms_created_bulk",
+        entity_type: "room",
+        entity_id: bulk.hostelId,
+        details: { count: newRooms.length, hostel_id: bulk.hostelId, prefix: bulk.prefix, from: bulk.from, to: bulk.to },
+      });
+
       setRooms((prev) => [...newRooms, ...prev]);
       setBulk({ hostelId: "", prefix: "Room", from: "1", to: "", capacity: "4" });
       setOpen(false);
@@ -182,6 +199,15 @@ export default function AdminRoomsPage({ loaderData }: Route.ComponentProps) {
         .eq("id", editRoom.id);
 
       if (error) throw error;
+
+      await supabase.from("audit_log").insert({
+        user_id: (await supabase.auth.getUser()).data.user?.id,
+        action: "room_updated",
+        entity_type: "room",
+        entity_id: editRoom.id,
+        details: { name: editForm.name.trim(), capacity: editForm.capacity ? parseInt(editForm.capacity) : null },
+      });
+
       setRooms((prev) =>
         prev.map((r) =>
           r.id === editRoom.id
@@ -203,6 +229,14 @@ export default function AdminRoomsPage({ loaderData }: Route.ComponentProps) {
     try {
       const { error } = await supabase.from("room").delete().eq("id", id);
       if (error) throw error;
+
+      await supabase.from("audit_log").insert({
+        user_id: (await supabase.auth.getUser()).data.user?.id,
+        action: "room_deleted",
+        entity_type: "room",
+        entity_id: id,
+      });
+
       setRooms((prev) => prev.filter((r) => r.id !== id));
       toast.success("Room deleted.");
     } catch (err: unknown) {

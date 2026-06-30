@@ -47,6 +47,14 @@ export default function AdminStudentsPage({ loaderData }: Route.ComponentProps) 
         .update({ has_special_privilege: !current })
         .eq("id", id);
       if (error) throw error;
+
+      await supabase.from("audit_log").insert({
+        user_id: (await supabase.auth.getUser()).data.user?.id,
+        action: current ? "privilege_revoked" : "privilege_granted",
+        entity_type: "student",
+        entity_id: id,
+      });
+
       setStudents((prev) =>
         prev.map((s) => s.id === id ? { ...s, has_special_privilege: !current } : s)
       );

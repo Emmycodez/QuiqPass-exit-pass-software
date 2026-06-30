@@ -115,7 +115,9 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     // Log the action
     await supabase.from("audit_log").insert({
       user_id: user.id,
-      action: "registered", // Using the closest available action from your schema
+      action: "profile_updated",
+      entity_type: "student",
+      entity_id: user.id,
     });
     toast.success("Profile updated successfully!");
     return {

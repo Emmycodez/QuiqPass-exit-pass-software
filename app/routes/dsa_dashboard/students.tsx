@@ -30,7 +30,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog";
-import { Search, Eye, Mail, Phone, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Eye, Mail, Phone, MapPin, ChevronLeft, ChevronRight, MoreVertical, Star, StarOff, Loader2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -55,6 +61,7 @@ type StudentRow = {
   hostel_id: string | null;
   room_number: string | null;
   bed_number: string | null;
+  has_special_privilege: boolean;
   hostel: { name: string; gender: string }[] | { name: string; gender: string } | null;
   totalPasses: number;
   approvedPasses: number;
@@ -143,6 +150,7 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
         hostel_id,
         room_number,
         bed_number,
+        has_special_privilege,
         hostel:hostel_id ( name, gender )
       `
       )
@@ -178,8 +186,9 @@ export function HydrateFallback() {
   return <Loader />;
 }
 
-export default function CSOStudentsPage({ loaderData }: Route.ComponentProps) {
-  const { students, error } = loaderData;
+export default function DSAStudentsPage({ loaderData }: Route.ComponentProps) {
+  const { students: initial, error } = loaderData;
+  const [students, setStudents] = useState(initial);
   const [searchTerm, setSearchTerm] = useState("");
   const [hostelFilter, setHostelFilter] = useState("all");
   const [genderFilter, setGenderFilter] = useState("all");
@@ -188,6 +197,34 @@ export default function CSOStudentsPage({ loaderData }: Route.ComponentProps) {
     null
   );
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [toggling, setToggling] = useState<string | null>(null);
+
+  async function togglePrivilege(id: string, current: boolean) {
+    setToggling(id);
+    try {
+      const { error } = await supabase
+        .from("student")
+        .update({ has_special_privilege: !current })
+        .eq("id", id);
+      if (error) throw error;
+
+      await supabase.from("audit_log").insert({
+        user_id: (await supabase.auth.getUser()).data.user?.id,
+        action: current ? "privilege_revoked" : "privilege_granted",
+        entity_type: "student",
+        entity_id: id,
+      });
+
+      setStudents((prev) =>
+        prev.map((s) => s.id === id ? { ...s, has_special_privilege: !current } : s)
+      );
+      toast.success(current ? "Special privilege removed." : "Special privilege granted.");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to update privilege.");
+    } finally {
+      setToggling(null);
+    }
+  }
 
   const itemsPerPage = 10;
 
@@ -332,6 +369,7 @@ export default function CSOStudentsPage({ loaderData }: Route.ComponentProps) {
                   <TableHead>Room</TableHead>
                   <TableHead className="text-right">Total Passes</TableHead>
                   <TableHead className="text-right">Active</TableHead>
+                  <TableHead className="text-center">Special Privilege</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -339,7 +377,7 @@ export default function CSOStudentsPage({ loaderData }: Route.ComponentProps) {
                 {paginatedStudents.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={8}
+                      colSpan={9}
                       className="text-center text-muted-foreground"
                     >
                       {filteredStudents.length === 0 ? "No students found" : "No students on this page"}
@@ -378,14 +416,42 @@ export default function CSOStudentsPage({ loaderData }: Route.ComponentProps) {
                           <span className="text-muted-foreground">-</span>
                         )}
                       </TableCell>
+                      <TableCell className="text-center">
+                        {student.has_special_privilege ? (
+                          <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100 gap-1">
+                            <Star className="h-3 w-3" />Granted
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary">Standard</Badge>
+                        )}
+                      </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleViewDetails(student)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleViewDetails(student)}>
+                              <Eye className="h-4 w-4" />
+                              View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => togglePrivilege(student.id, student.has_special_privilege)}
+                              disabled={toggling === student.id}
+                            >
+                              {toggling === student.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : student.has_special_privilege ? (
+                                <StarOff className="h-4 w-4" />
+                              ) : (
+                                <Star className="h-4 w-4" />
+                              )}
+                              {student.has_special_privilege ? "Revoke Privilege" : "Grant Privilege"}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))

@@ -87,10 +87,10 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
       ).length
     : 0;
   const approvedCount = passes
-    ? passes.filter((pass) => pass.status === "approved").length
+    ? passes.filter((pass) => pass.status === "cso_approved").length
     : 0;
   const deniedCount = passes
-    ? passes.filter((pass) => pass.status === "denied").length
+    ? passes.filter((pass) => pass.status === "rejected").length
     : 0;
 
   return {

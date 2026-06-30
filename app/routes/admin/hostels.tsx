@@ -93,6 +93,14 @@ export default function AdminHostelsPage({ loaderData }: Route.ComponentProps) {
         if (roomError) throw roomError;
       }
 
+      await supabase.from("audit_log").insert({
+        user_id: (await supabase.auth.getUser()).data.user?.id,
+        action: "hostel_created",
+        entity_type: "hostel",
+        entity_id: data.id,
+        details: { name: name.trim(), gender, roomCount: numRooms },
+      });
+
       setHostels((prev) => [{ ...data, roomCount: numRooms }, ...prev]);
       setName("");
       setGender("");
@@ -111,6 +119,14 @@ export default function AdminHostelsPage({ loaderData }: Route.ComponentProps) {
     try {
       const { error } = await supabase.from("hostel").delete().eq("id", id);
       if (error) throw error;
+
+      await supabase.from("audit_log").insert({
+        user_id: (await supabase.auth.getUser()).data.user?.id,
+        action: "hostel_deleted",
+        entity_type: "hostel",
+        entity_id: id,
+      });
+
       setHostels((prev) => prev.filter((h) => h.id !== id));
       toast.success("Hostel deleted.");
     } catch (err: unknown) {

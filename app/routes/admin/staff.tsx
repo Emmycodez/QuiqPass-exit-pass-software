@@ -98,28 +98,19 @@ export default function AdminStaffPage({ loaderData }: Route.ComponentProps) {
     }
     setSubmitting(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-staff-user`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-          body: JSON.stringify({
-            email: form.email,
-            password: form.password,
-            firstName: form.firstName,
-            lastName: form.lastName,
-            role: form.role,
-            gender: form.gender || undefined,
-          }),
-        }
-      );
+      const { data, error } = await supabase.functions.invoke("create-staff-user", {
+        body: {
+          email: form.email,
+          password: form.password,
+          firstName: form.firstName,
+          lastName: form.lastName,
+          role: form.role,
+          gender: form.gender || undefined,
+        },
+      });
 
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.error ?? "Failed to create staff");
+      if (error) throw new Error(error.message ?? "Failed to create staff");
+      const result = data;
 
       toast.success(`${form.firstName} ${form.lastName} created successfully.`);
       setList((prev) => [
@@ -150,6 +141,14 @@ export default function AdminStaffPage({ loaderData }: Route.ComponentProps) {
     try {
       const { error } = await supabase.from("staff").delete().eq("id", id);
       if (error) throw error;
+
+      await supabase.from("audit_log").insert({
+        user_id: (await supabase.auth.getUser()).data.user?.id,
+        action: "staff_deleted",
+        entity_type: "staff",
+        entity_id: id,
+      });
+
       setList((prev) => prev.filter((s) => s.id !== id));
       toast.success("Staff member removed.");
     } catch (err: unknown) {
@@ -180,6 +179,14 @@ export default function AdminStaffPage({ loaderData }: Route.ComponentProps) {
         .eq("id", editStaff.id);
 
       if (error) throw error;
+
+      await supabase.from("audit_log").insert({
+        user_id: (await supabase.auth.getUser()).data.user?.id,
+        action: "staff_updated",
+        entity_type: "staff",
+        entity_id: editStaff.id,
+        details: { role: editForm.role, gender: editForm.gender || null },
+      });
 
       setList((prev) =>
         prev.map((s) =>
